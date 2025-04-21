@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
@@ -36,6 +35,41 @@ import { usePositions } from "@/contexts/PositionsContext";
 import { useToast } from "@/hooks/use-toast";
 import { Application, ProfessorProfile } from "@/lib/types";
 
+const DEMO_APPLICATIONS: Application[] = [
+  {
+    id: "demo-1",
+    positionId: "demo",
+    studentId: "S2023001",
+    fullName: "Aarya Gupta",
+    idNumber: "2023A7PS001G",
+    email: "aarya.gupta@bits-demo.edu",
+    whatsappNumber: "9876543210",
+    btechBranch: "CSE",
+    dualDegree: "",
+    minorDegree: "Data Science",
+    cgpa: 9.1,
+    pitch: "I am passionate about research and have completed relevant projects.",
+    status: "pending",
+    createdAt: new Date(),
+  },
+  {
+    id: "demo-2",
+    positionId: "demo",
+    studentId: "S2023022",
+    fullName: "Rahul Sen",
+    idNumber: "2023A7PS022G",
+    email: "rahul.sen@bits-demo.edu",
+    whatsappNumber: "9123456789",
+    btechBranch: "EEE",
+    dualDegree: "MSc Chemistry",
+    minorDegree: "",
+    cgpa: 8.7,
+    pitch: "Strong interest in your research area, and a good track record in circuits.",
+    status: "pending",
+    createdAt: new Date(),
+  }
+];
+
 const ProfessorDashboard = () => {
   const { user, logout } = useAuth();
   const { myPositions, getApplicationsForPosition, updateApplicationStatus, loading } = usePositions();
@@ -43,9 +77,11 @@ const ProfessorDashboard = () => {
   const { toast } = useToast();
   
   const [selectedPositionId, setSelectedPositionId] = useState<string | null>(null);
-  
+  const [demoAppStates, setDemoAppStates] = useState<{
+    [positionId: string]: Application[]
+  }>({});
+
   useEffect(() => {
-    // If not logged in or not a professor, redirect to login
     if (!user) {
       navigate("/login");
     } else if (user.role !== "professor") {
@@ -59,12 +95,10 @@ const ProfessorDashboard = () => {
 
   const professor = user as ProfessorProfile;
 
-  // Get applications for selected position
   const getApplications = (positionId: string) => {
     return getApplicationsForPosition(positionId);
   };
 
-  // Handle application status update
   const handleStatusUpdate = async (applicationId: string, status: "pending" | "shortlisted" | "rejected") => {
     try {
       await updateApplicationStatus(applicationId, status);
@@ -82,7 +116,6 @@ const ProfessorDashboard = () => {
     }
   };
 
-  // Get status badge color
   const getStatusColor = (status: string) => {
     switch (status) {
       case "pending": return "bg-bits-warning text-black";
@@ -92,7 +125,6 @@ const ProfessorDashboard = () => {
     }
   };
 
-  // Get application counts for a position
   const getApplicationCounts = (positionId: string) => {
     const applications = getApplications(positionId);
     const total = applications.length;
@@ -103,9 +135,38 @@ const ProfessorDashboard = () => {
     return { total, pending, shortlisted, rejected };
   };
 
+  const getDisplayedApplications = (positionId: string) => {
+    const realApps = getApplicationsForPosition(positionId);
+    if (realApps.length > 0) {
+      return realApps;
+    }
+    if (!demoAppStates[positionId]) {
+      const demoForPosition = DEMO_APPLICATIONS.map((a, idx) => ({
+        ...a,
+        id: `demo-${positionId}-${idx}`,
+        positionId,
+      }));
+      setDemoAppStates(prev => ({ ...prev, [positionId]: demoForPosition }));
+      return demoForPosition;
+    }
+    return demoAppStates[positionId];
+  };
+
+  const handleDemoStatusUpdate = (positionId: string, applicationId: string, status: "pending" | "shortlisted" | "rejected") => {
+    setDemoAppStates(prev => ({
+      ...prev,
+      [positionId]: prev[positionId].map(app =>
+        app.id === applicationId ? { ...app, status } : app
+      )
+    }));
+    toast({
+      title: "Demo Status Updated",
+      description: `Demo application status updated to ${status}`,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-bits-blue text-white py-4 shadow-md">
         <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center">
           <h1 className="text-xl md:text-2xl font-bold mb-2 md:mb-0">BITS Research Connect</h1>
@@ -127,7 +188,6 @@ const ProfessorDashboard = () => {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
           <div>
@@ -233,7 +293,7 @@ const ProfessorDashboard = () => {
                           className="flex-1 bg-bits-blue hover:bg-bits-darkblue"
                           onClick={() => setSelectedPositionId(position.id)}
                         >
-                          View Applications ({counts.total})
+                          View Applications ({counts.total || getDisplayedApplications(position.id).length})
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="sm:max-w-4xl">
@@ -244,7 +304,7 @@ const ProfessorDashboard = () => {
                           </DialogDescription>
                         </DialogHeader>
                         <div className="py-4">
-                          {counts.total === 0 ? (
+                          {getDisplayedApplications(position.id).length === 0 ? (
                             <div className="text-center py-8">
                               <p className="text-gray-500">No applications received yet.</p>
                             </div>
@@ -261,43 +321,71 @@ const ProfessorDashboard = () => {
                                   </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                  {selectedPositionId && 
-                                    getApplications(selectedPositionId).map((app) => (
-                                    <TableRow key={app.id}>
-                                      <TableCell>
-                                        <div className="font-medium">{app.fullName}</div>
-                                        <div className="text-sm text-gray-500">{app.idNumber}</div>
-                                      </TableCell>
-                                      <TableCell>{app.cgpa}</TableCell>
-                                      <TableCell>{app.btechBranch || "-"}</TableCell>
-                                      <TableCell>
-                                        <Badge className={getStatusColor(app.status)}>
-                                          {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
-                                        </Badge>
-                                      </TableCell>
-                                      <TableCell className="text-right">
-                                        <div className="flex justify-end gap-2">
-                                          <Button 
-                                            variant="outline" 
-                                            size="sm"
-                                            onClick={() => handleStatusUpdate(app.id, "shortlisted")}
-                                            disabled={app.status === "shortlisted"}
-                                          >
-                                            Shortlist
-                                          </Button>
-                                          <Button 
-                                            variant="outline" 
-                                            size="sm"
-                                            onClick={() => handleStatusUpdate(app.id, "rejected")}
-                                            className="text-bits-error border-bits-error hover:bg-red-50"
-                                            disabled={app.status === "rejected"}
-                                          >
-                                            Reject
-                                          </Button>
-                                        </div>
-                                      </TableCell>
-                                    </TableRow>
-                                  ))}
+                                  {selectedPositionId &&
+                                    getDisplayedApplications(selectedPositionId).map((app) => (
+                                      <TableRow key={app.id}>
+                                        <TableCell>
+                                          <div className="font-medium">{app.fullName}</div>
+                                          <div className="text-sm text-gray-500">{app.idNumber}</div>
+                                        </TableCell>
+                                        <TableCell>{app.cgpa}</TableCell>
+                                        <TableCell>{app.btechBranch || "-"}</TableCell>
+                                        <TableCell>
+                                          <Badge className={getStatusColor(app.status)}>
+                                            {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
+                                          </Badge>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                          <div className="flex justify-end gap-2">
+                                            {app.id.startsWith("demo-") ? (
+                                              <>
+                                                <Button
+                                                  variant="outline"
+                                                  size="sm"
+                                                  onClick={() =>
+                                                    handleDemoStatusUpdate(position.id, app.id, "shortlisted")
+                                                  }
+                                                  disabled={app.status === "shortlisted"}
+                                                >
+                                                  Shortlist
+                                                </Button>
+                                                <Button
+                                                  variant="outline"
+                                                  size="sm"
+                                                  onClick={() =>
+                                                    handleDemoStatusUpdate(position.id, app.id, "rejected")
+                                                  }
+                                                  className="text-bits-error border-bits-error hover:bg-red-50"
+                                                  disabled={app.status === "rejected"}
+                                                >
+                                                  Reject
+                                                </Button>
+                                              </>
+                                            ) : (
+                                              <>
+                                                <Button
+                                                  variant="outline"
+                                                  size="sm"
+                                                  onClick={() => handleStatusUpdate(app.id, "shortlisted")}
+                                                  disabled={app.status === "shortlisted"}
+                                                >
+                                                  Shortlist
+                                                </Button>
+                                                <Button
+                                                  variant="outline"
+                                                  size="sm"
+                                                  onClick={() => handleStatusUpdate(app.id, "rejected")}
+                                                  className="text-bits-error border-bits-error hover:bg-red-50"
+                                                  disabled={app.status === "rejected"}
+                                                >
+                                                  Reject
+                                                </Button>
+                                              </>
+                                            )}
+                                          </div>
+                                        </TableCell>
+                                      </TableRow>
+                                    ))}
                                 </TableBody>
                               </Table>
                             </ScrollArea>
