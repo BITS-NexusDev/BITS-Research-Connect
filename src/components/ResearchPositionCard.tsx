@@ -23,6 +23,7 @@ interface ResearchPositionCardProps {
   getStatusColor: (status: string) => string;
   handleStatusUpdate: (applicationId: string, status: "pending" | "shortlisted" | "rejected") => void;
   handleDemoStatusUpdate: (positionId: string, applicationId: string, status: "pending" | "shortlisted" | "rejected") => void;
+  isDemo?: boolean;
 }
 
 const ResearchPositionCard: React.FC<ResearchPositionCardProps> = ({
@@ -33,13 +34,17 @@ const ResearchPositionCard: React.FC<ResearchPositionCardProps> = ({
   setSelectedPositionId,
   getStatusColor,
   handleStatusUpdate,
-  handleDemoStatusUpdate
+  handleDemoStatusUpdate,
+  isDemo = false
 }) => (
-  <Card>
+  <Card className={isDemo ? "border-bits-blue border-2" : ""}>
     <CardHeader>
       <div className="flex flex-col md:flex-row justify-between md:items-center">
         <div>
-          <CardTitle className="text-bits-blue">{position.researchArea}</CardTitle>
+          <CardTitle className="text-bits-blue">
+            {position.researchArea}
+            {isDemo && <span className="ml-2 text-sm bg-bits-lightblue text-bits-darkblue px-2 py-1 rounded-md">Demo</span>}
+          </CardTitle>
           <CardDescription>
             {position.courseCode} • {position.credits} Credits • {position.semester}
           </CardDescription>
@@ -99,9 +104,16 @@ const ResearchPositionCard: React.FC<ResearchPositionCardProps> = ({
         handleStatusUpdate={handleStatusUpdate}
         handleDemoStatusUpdate={handleDemoStatusUpdate}
       />
-      <Button variant="outline" className="flex-1" asChild>
-        <Link to={`/edit-position/${position.id}`}>Edit Position</Link>
-      </Button>
+      {!isDemo && (
+        <Button variant="outline" className="flex-1" asChild>
+          <Link to={`/edit-position/${position.id}`}>Edit Position</Link>
+        </Button>
+      )}
+      {isDemo && (
+        <Button variant="outline" className="flex-1" asChild>
+          <Link to="/create-position">Create Real Position</Link>
+        </Button>
+      )}
     </CardFooter>
   </Card>
 );

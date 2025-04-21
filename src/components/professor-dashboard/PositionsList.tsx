@@ -2,6 +2,8 @@
 import React from "react";
 import { ResearchPosition, Application } from "@/lib/types";
 import ResearchPositionCard from "@/components/ResearchPositionCard";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface Counts {
   total: number;
@@ -19,6 +21,7 @@ interface PositionsListProps {
   getStatusColor: (status: string) => string;
   handleStatusUpdate: (applicationId: string, status: "pending" | "shortlisted" | "rejected") => void;
   handleDemoStatusUpdate: (positionId: string, applicationId: string, status: "pending" | "shortlisted" | "rejected") => void;
+  showingDemo?: boolean;
 }
 
 const PositionsList: React.FC<PositionsListProps> = ({
@@ -29,9 +32,19 @@ const PositionsList: React.FC<PositionsListProps> = ({
   setSelectedPositionId,
   getStatusColor,
   handleStatusUpdate,
-  handleDemoStatusUpdate
+  handleDemoStatusUpdate,
+  showingDemo = false
 }) => (
   <div className="space-y-6">
+    {showingDemo && (
+      <Alert className="bg-bits-lightblue border-bits-blue">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          This is a demo view showing sample research positions and applications. Post a real position to see your actual data.
+        </AlertDescription>
+      </Alert>
+    )}
+    
     {positions.map(position => (
       <ResearchPositionCard
         key={position.id}
@@ -43,6 +56,7 @@ const PositionsList: React.FC<PositionsListProps> = ({
         getStatusColor={getStatusColor}
         handleStatusUpdate={handleStatusUpdate}
         handleDemoStatusUpdate={handleDemoStatusUpdate}
+        isDemo={position.id === "demo-position"}
       />
     ))}
   </div>

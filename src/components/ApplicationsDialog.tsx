@@ -43,11 +43,14 @@ const ApplicationsDialog: React.FC<ApplicationsDialogProps> = ({
   handleDemoStatusUpdate,
 }) => {
   const [open, setOpen] = React.useState(false);
+  const isDemo = position.id.includes("demo");
 
   // Ensure applications are being shown for the position when dialog opens
   useEffect(() => {
     if (open) {
       setSelectedPositionId(position.id);
+      console.log(`Opening applications dialog for ${position.id}`);
+      console.log("Applications:", applications);
     }
   }, [open, position.id, setSelectedPositionId]);
 
@@ -69,6 +72,7 @@ const ApplicationsDialog: React.FC<ApplicationsDialogProps> = ({
           <DialogTitle>Applications for {position.researchArea}</DialogTitle>
           <DialogDescription>
             {position.courseCode} • {position.credits} Credits • {position.semester}
+            {isDemo && <span className="ml-2 text-bits-blue font-medium">(Demo Data)</span>}
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">
@@ -104,7 +108,7 @@ const ApplicationsDialog: React.FC<ApplicationsDialogProps> = ({
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          {app.id.startsWith("demo-") ? (
+                          {app.id.includes("demo") || isDemo ? (
                             <>
                               <Button
                                 variant="outline"

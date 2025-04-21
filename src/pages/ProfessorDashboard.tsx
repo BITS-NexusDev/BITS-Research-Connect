@@ -5,15 +5,34 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePositions } from "@/contexts/PositionsContext";
 import { useToast } from "@/hooks/use-toast";
-import { Application, ProfessorProfile } from "@/lib/types";
+import { Application, ProfessorProfile, ResearchPosition } from "@/lib/types";
 import DashboardHeader from "@/components/professor-dashboard/DashboardHeader";
 import PositionsList from "@/components/professor-dashboard/PositionsList";
 import EmptyState from "@/components/professor-dashboard/EmptyState";
 
+// Demo position for professors with no positions
+const DEMO_POSITION: ResearchPosition = {
+  id: "demo-position",
+  professorId: "demo",
+  professorName: "Demo Professor",
+  researchArea: "Machine Learning for Computer Vision",
+  courseCode: "CS F266",
+  credits: 3,
+  semester: "Academic Year 24-25 Semester-1",
+  prerequisites: "CS F111 with Grade: A or above",
+  minimumCGPA: 8.0,
+  summary: "Development of deep learning models for image classification and object detection.",
+  specificRequirements: "Proficiency in Python and PyTorch/TensorFlow is required.",
+  createdAt: new Date(),
+  status: "open",
+  department: "Computer Science"
+};
+
+// Demo applications
 const DEMO_APPLICATIONS: Application[] = [
   {
     id: "demo-1",
-    positionId: "demo",
+    positionId: "demo-position",
     studentId: "S2023001",
     fullName: "Aarya Gupta",
     idNumber: "2023A7PS001G",
@@ -29,7 +48,7 @@ const DEMO_APPLICATIONS: Application[] = [
   },
   {
     id: "demo-2",
-    positionId: "demo",
+    positionId: "demo-position",
     studentId: "S2023022",
     fullName: "Rahul Sen",
     idNumber: "2023A7PS022G",
@@ -53,6 +72,10 @@ const ProfessorDashboard = () => {
 
   const [selectedPositionId, setSelectedPositionId] = useState<string | null>(null);
   const [demoAppStates, setDemoAppStates] = useState<{ [positionId: string]: Application[] }>({});
+  const [showDemoPosition, setShowDemoPosition] = useState(false);
+  
+  // Combined positions (real + demo if needed)
+  const [displayPositions, setDisplayPositions] = useState<ResearchPosition[]>([]);
 
   useEffect(() => {
     if (!user) {
@@ -62,33 +85,32 @@ const ProfessorDashboard = () => {
     }
   }, [user, navigate]);
 
+  // Handle positions and demo data
   useEffect(() => {
-    // Initialize demo applications for each position when positions load
-    if (myPositions.length > 0) {
-      const initialDemoStates: { [positionId: string]: Application[] } = {};
-      myPositions.forEach(position => {
-        const apps = getApplicationsForPosition(position.id);
-        if (apps.length === 0) {
-          initialDemoStates[position.id] = DEMO_APPLICATIONS.map((app, idx) => ({
-            ...app,
-            id: `demo-${position.id}-${idx}`,
-            positionId: position.id,
-          }));
-        }
+    if (loading) return;
+    
+    // If no real positions, show demo position
+    if (myPositions.length === 0) {
+      console.log("No real positions, showing demo position");
+      setShowDemoPosition(true);
+      setDisplayPositions([DEMO_POSITION]);
+      
+      // Initialize demo applications for the demo position
+      setDemoAppStates({
+        "demo-position": DEMO_APPLICATIONS
       });
-      if (Object.keys(initialDemoStates).length > 0) {
-        setDemoAppStates(prev => ({ ...prev, ...initialDemoStates }));
-      }
+    } else {
+      console.log(`Found ${myPositions.length} real positions, hiding demo`);
+      setShowDemoPosition(false);
+      setDisplayPositions(myPositions);
     }
-  }, [myPositions]);
+  }, [myPositions, loading]);
 
   if (!user || user.role !== "professor") {
     return null;
   }
 
   const professor = user as ProfessorProfile;
-
-  const getApplications = (positionId: string) => getApplicationsForPosition(positionId);
 
   const handleStatusUpdate = async (applicationId: string, status: "pending" | "shortlisted" | "rejected") => {
     try {
@@ -115,58 +137,19 @@ const ProfessorDashboard = () => {
     }
   };
 
-  // Helper: counts for all positions (to give to PositionsList as data object)
-  const getApplicationCountsMap = () => {
-    const map: { [id: string]: { total: number; pending: number; shortlisted: number; rejected: number } } = {};
-    for (const position of myPositions) {
-      const apps = getDisplayedApplications(position.id);
-      map[position.id] = {
-        total: apps.length,
-        pending: apps.filter(a => a.status === "pending").length,
-        shortlisted: apps.filter(a => a.status === "shortlisted").length,
-        rejected: apps.filter(a => a.status === "rejected").length,
-      };
-    }
-    return map;
-  };
-
-  // Helper: applications for all positions (including demos)
-  const getApplicationsMap = () => {
-    const map: { [id: string]: Application[] } = {};
-    for (const position of myPositions) {
-      map[position.id] = getDisplayedApplications(position.id);
-    }
-    return map;
-  };
-
-  // Use demo applications if none exist
+  // Get applications for a position (real or demo)
   const getDisplayedApplications = (positionId: string) => {
-    const realApps = getApplicationsForPosition(positionId);
-    if (realApps.length > 0) return realApps;
-    
-    // If no real applications and no demo applications yet for this position, create them
-    if (!demoAppStates[positionId]) {
-      const demoForPosition = DEMO_APPLICATIONS.map((a, idx) => ({
-        ...a,
-        id: `demo-${positionId}-${idx}`,
-        positionId,
-      }));
-      
-      // Update the demo applications state
-      setDemoAppStates(prev => {
-        const newState = { ...prev, [positionId]: demoForPosition };
-        console.log(`Adding demo applications for position ${positionId}:`, newState);
-        return newState;
-      });
-      
-      // Return the newly created demos
-      return demoForPosition;
+    // For demo position, return demo applications
+    if (positionId === "demo-position") {
+      return demoAppStates["demo-position"] || DEMO_APPLICATIONS;
     }
     
-    // Return existing demos for this position
-    return demoAppStates[positionId] || [];
+    // For real positions, get real applications
+    const realApps = getApplicationsForPosition(positionId);
+    return realApps;
   };
 
+  // Handle demo application status updates
   const handleDemoStatusUpdate = (
     positionId: string,
     applicationId: string,
@@ -175,19 +158,50 @@ const ProfessorDashboard = () => {
     setDemoAppStates(prev => {
       const updated = {
         ...prev,
-        [positionId]: (prev[positionId] || []).map(app =>
+        [positionId]: (prev[positionId] || DEMO_APPLICATIONS).map(app =>
           app.id === applicationId ? { ...app, status } : app
         )
       };
-      console.log(`Updated demo application ${applicationId} status to ${status}:`, updated[positionId]);
+      console.log(`Updated demo application ${applicationId} status to ${status}`);
       return updated;
     });
     
     toast({
-      title: "Demo Status Updated",
-      description: `Demo application status updated to ${status}`,
+      title: "Status Updated",
+      description: `Application status updated to ${status}`,
     });
   };
+
+  // Helper: counts for all positions
+  const getApplicationCountsMap = () => {
+    const map: { [id: string]: { total: number; pending: number; shortlisted: number; rejected: number } } = {};
+    
+    for (const position of displayPositions) {
+      const apps = getDisplayedApplications(position.id);
+      map[position.id] = {
+        total: apps.length,
+        pending: apps.filter(a => a.status === "pending").length,
+        shortlisted: apps.filter(a => a.status === "shortlisted").length,
+        rejected: apps.filter(a => a.status === "rejected").length,
+      };
+    }
+    
+    return map;
+  };
+
+  // Helper: applications for all positions (including demos)
+  const getApplicationsMap = () => {
+    const map: { [id: string]: Application[] } = {};
+    
+    for (const position of displayPositions) {
+      map[position.id] = getDisplayedApplications(position.id);
+    }
+    
+    return map;
+  };
+
+  console.log("Display positions:", displayPositions);
+  console.log("Show demo:", showDemoPosition);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -210,11 +224,11 @@ const ProfessorDashboard = () => {
           <div className="text-center py-12">
             <p className="text-gray-500">Loading your research positions...</p>
           </div>
-        ) : myPositions.length === 0 ? (
+        ) : !showDemoPosition && myPositions.length === 0 ? (
           <EmptyState />
         ) : (
           <PositionsList
-            positions={myPositions}
+            positions={displayPositions}
             countsMap={getApplicationCountsMap()}
             applicationsMap={getApplicationsMap()}
             selectedPositionId={selectedPositionId}
@@ -222,6 +236,7 @@ const ProfessorDashboard = () => {
             getStatusColor={getStatusColor}
             handleStatusUpdate={handleStatusUpdate}
             handleDemoStatusUpdate={handleDemoStatusUpdate}
+            showingDemo={showDemoPosition}
           />
         )}
       </main>
