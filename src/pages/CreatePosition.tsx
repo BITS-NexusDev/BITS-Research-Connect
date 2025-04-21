@@ -95,10 +95,7 @@ const CreatePosition = () => {
         ...formData,
         credits: parseInt(formData.credits),
         minimumCGPA: cgpa,
-        department: professorUser.department,
-        professorId: professorUser.id,
-        professorName: professorUser.fullName,
-        status: "open"
+        department: professorUser.department
       });
       
       toast({
