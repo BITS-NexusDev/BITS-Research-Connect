@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { User, UserRole } from "@/lib/types";
+import { User, UserRole, StudentProfile, ProfessorProfile } from "@/lib/types";
 import { mockDataService } from "@/lib/mock-data";
 
 interface AuthContextType {
@@ -108,9 +108,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       let response;
       if (user.role === "student") {
-        response = await mockDataService.updateStudentProfile(user.id, data as Partial<User>);
+        // Cast the generic data to a more specific type 
+        // that matches what the function expects
+        response = await mockDataService.updateStudentProfile(
+          user.id, 
+          data as Partial<StudentProfile>
+        );
       } else {
-        response = await mockDataService.updateProfessorProfile(user.id, data as Partial<User>);
+        // Cast the generic data to a more specific type
+        // that matches what the function expects
+        response = await mockDataService.updateProfessorProfile(
+          user.id, 
+          data as Partial<ProfessorProfile>
+        );
       }
       
       if (response.success) {

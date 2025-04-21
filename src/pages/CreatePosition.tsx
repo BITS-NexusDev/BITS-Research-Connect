@@ -94,15 +94,13 @@ const CreatePosition = () => {
     try {
       setIsSubmitting(true);
       
+      // Pass the professor-related properties separately to createPosition
       await createPosition({
         ...formData,
         credits: parseInt(formData.credits),
         minimumCGPA: cgpa,
-        professorId: professorUser.id,
-        professorName: professorUser.fullName,
         department: professorUser.department,
-        status: "open"
-      });
+      }, professorUser.id, professorUser.fullName);
       
       toast({
         title: "Position Created",
