@@ -34,6 +34,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePositions } from "@/contexts/PositionsContext";
 import { useToast } from "@/hooks/use-toast";
 import { Application, ProfessorProfile } from "@/lib/types";
+import ResearchPositionCard from "@/components/ResearchPositionCard";
 
 const DEMO_APPLICATIONS: Application[] = [
   {
@@ -224,181 +225,19 @@ const ProfessorDashboard = () => {
           <div className="space-y-6">
             {myPositions.map(position => {
               const counts = getApplicationCounts(position.id);
-              
+              const displayedApplications = getDisplayedApplications(position.id);
               return (
-                <Card key={position.id}>
-                  <CardHeader>
-                    <div className="flex flex-col md:flex-row justify-between md:items-center">
-                      <div>
-                        <CardTitle className="text-bits-blue">{position.researchArea}</CardTitle>
-                        <CardDescription>
-                          {position.courseCode} • {position.credits} Credits • {position.semester}
-                        </CardDescription>
-                      </div>
-                      
-                      <div className="flex flex-wrap gap-2 mt-2 md:mt-0">
-                        <Badge variant="outline" className="bg-bits-lightblue text-bits-darkblue">
-                          {counts.total} Applications
-                        </Badge>
-                        {counts.total > 0 && (
-                          <>
-                            <Badge variant="outline" className="bg-bits-warning text-black">
-                              {counts.pending} Pending
-                            </Badge>
-                            <Badge variant="outline" className="bg-bits-success text-white">
-                              {counts.shortlisted} Shortlisted
-                            </Badge>
-                            <Badge variant="outline" className="bg-bits-error text-white">
-                              {counts.rejected} Rejected
-                            </Badge>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </CardHeader>
-                  
-                  <CardContent>
-                    <div className="mb-4">
-                      <h4 className="font-medium text-gray-700">Summary</h4>
-                      <p className="text-sm mt-1">{position.summary}</p>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Prerequisites</p>
-                        <p className="text-sm">{position.prerequisites || "None specified"}</p>
-                      </div>
-                      
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Minimum CGPA</p>
-                        <p className="text-sm">{position.minimumCGPA}</p>
-                      </div>
-                      
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Date Posted</p>
-                        <p className="text-sm">{new Date(position.createdAt).toLocaleDateString()}</p>
-                      </div>
-                      
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Status</p>
-                        <p className="text-sm">{position.status.toUpperCase()}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                  
-                  <CardFooter className="flex flex-wrap gap-4">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button 
-                          className="flex-1 bg-bits-blue hover:bg-bits-darkblue"
-                          onClick={() => setSelectedPositionId(position.id)}
-                        >
-                          View Applications ({counts.total || getDisplayedApplications(position.id).length})
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-4xl">
-                        <DialogHeader>
-                          <DialogTitle>Applications for {position.researchArea}</DialogTitle>
-                          <DialogDescription>
-                            {position.courseCode} • {position.credits} Credits • {position.semester}
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="py-4">
-                          {getDisplayedApplications(position.id).length === 0 ? (
-                            <div className="text-center py-8">
-                              <p className="text-gray-500">No applications received yet.</p>
-                            </div>
-                          ) : (
-                            <ScrollArea className="h-[400px] rounded-md border p-4">
-                              <Table>
-                                <TableHeader>
-                                  <TableRow>
-                                    <TableHead>Student</TableHead>
-                                    <TableHead>CGPA</TableHead>
-                                    <TableHead>Branch</TableHead>
-                                    <TableHead className="w-[100px]">Status</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                  </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {selectedPositionId &&
-                                    getDisplayedApplications(selectedPositionId).map((app) => (
-                                      <TableRow key={app.id}>
-                                        <TableCell>
-                                          <div className="font-medium">{app.fullName}</div>
-                                          <div className="text-sm text-gray-500">{app.idNumber}</div>
-                                        </TableCell>
-                                        <TableCell>{app.cgpa}</TableCell>
-                                        <TableCell>{app.btechBranch || "-"}</TableCell>
-                                        <TableCell>
-                                          <Badge className={getStatusColor(app.status)}>
-                                            {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
-                                          </Badge>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                          <div className="flex justify-end gap-2">
-                                            {app.id.startsWith("demo-") ? (
-                                              <>
-                                                <Button
-                                                  variant="outline"
-                                                  size="sm"
-                                                  onClick={() =>
-                                                    handleDemoStatusUpdate(position.id, app.id, "shortlisted")
-                                                  }
-                                                  disabled={app.status === "shortlisted"}
-                                                >
-                                                  Shortlist
-                                                </Button>
-                                                <Button
-                                                  variant="outline"
-                                                  size="sm"
-                                                  onClick={() =>
-                                                    handleDemoStatusUpdate(position.id, app.id, "rejected")
-                                                  }
-                                                  className="text-bits-error border-bits-error hover:bg-red-50"
-                                                  disabled={app.status === "rejected"}
-                                                >
-                                                  Reject
-                                                </Button>
-                                              </>
-                                            ) : (
-                                              <>
-                                                <Button
-                                                  variant="outline"
-                                                  size="sm"
-                                                  onClick={() => handleStatusUpdate(app.id, "shortlisted")}
-                                                  disabled={app.status === "shortlisted"}
-                                                >
-                                                  Shortlist
-                                                </Button>
-                                                <Button
-                                                  variant="outline"
-                                                  size="sm"
-                                                  onClick={() => handleStatusUpdate(app.id, "rejected")}
-                                                  className="text-bits-error border-bits-error hover:bg-red-50"
-                                                  disabled={app.status === "rejected"}
-                                                >
-                                                  Reject
-                                                </Button>
-                                              </>
-                                            )}
-                                          </div>
-                                        </TableCell>
-                                      </TableRow>
-                                    ))}
-                                </TableBody>
-                              </Table>
-                            </ScrollArea>
-                          )}
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                    
-                    <Button variant="outline" className="flex-1" asChild>
-                      <Link to={`/edit-position/${position.id}`}>Edit Position</Link>
-                    </Button>
-                  </CardFooter>
-                </Card>
+                <ResearchPositionCard
+                  key={position.id}
+                  position={position}
+                  counts={counts}
+                  applications={displayedApplications}
+                  selectedPositionId={selectedPositionId}
+                  setSelectedPositionId={setSelectedPositionId}
+                  getStatusColor={getStatusColor}
+                  handleStatusUpdate={handleStatusUpdate}
+                  handleDemoStatusUpdate={handleDemoStatusUpdate}
+                />
               );
             })}
           </div>
