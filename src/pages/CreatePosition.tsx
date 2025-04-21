@@ -38,7 +38,6 @@ const CreatePosition = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   React.useEffect(() => {
-    // If not logged in or not a professor, redirect to login
     if (!user) {
       navigate("/login");
     } else if (user.role !== "professor") {
@@ -58,7 +57,6 @@ const CreatePosition = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Form validation
     if (!formData.researchArea || !formData.courseCode || !formData.credits || 
         !formData.semester || !formData.minimumCGPA || !formData.summary) {
       toast({
@@ -69,7 +67,6 @@ const CreatePosition = () => {
       return;
     }
     
-    // Validate CGPA (between 0 and 10)
     const cgpa = parseFloat(formData.minimumCGPA);
     if (isNaN(cgpa) || cgpa < 0 || cgpa > 10) {
       toast({
@@ -94,20 +91,21 @@ const CreatePosition = () => {
     try {
       setIsSubmitting(true);
       
-      // Pass the professor-related properties separately to createPosition
       await createPosition({
         ...formData,
         credits: parseInt(formData.credits),
         minimumCGPA: cgpa,
         department: professorUser.department,
-      }, professorUser.id, professorUser.fullName);
+        professorId: professorUser.id,
+        professorName: professorUser.fullName,
+        status: "open"
+      });
       
       toast({
         title: "Position Created",
         description: "Your research position has been successfully posted.",
       });
       
-      // Redirect to dashboard
       navigate("/professor-dashboard");
     } catch (error) {
       toast({
