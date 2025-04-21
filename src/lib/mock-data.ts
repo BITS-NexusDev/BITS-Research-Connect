@@ -1,4 +1,3 @@
-
 import { Application, ProfessorProfile, ResearchPosition, StudentProfile } from "./types";
 
 // Mock student profiles
@@ -174,11 +173,17 @@ let positions = [...mockPositions];
 let applications = [...mockApplications];
 let currentUser: string | null = null;
 
+interface ServiceResponse<T> {
+  success: boolean;
+  error?: string;
+  [key: string]: any;
+}
+
 export const mockDataService = {
   // Authentication
-  login: (email: string, password: string) => {
+  login: (email: string, password: string): ServiceResponse<{ user: StudentProfile | ProfessorProfile }> => {
     if (!email.endsWith('@goa.bits-pilani.ac.in')) {
-      throw new Error('Only BITS Pilani Goa campus emails are allowed');
+      return { success: false, error: 'Only BITS Pilani Goa campus emails are allowed' };
     }
     
     // Find user by email
@@ -197,34 +202,61 @@ export const mockDataService = {
     return { success: false, error: 'Invalid credentials' };
   },
   
-  register: (userData: Partial<StudentProfile | ProfessorProfile>) => {
+  register: (userData: Partial<StudentProfile | ProfessorProfile>): ServiceResponse<{ user: StudentProfile | ProfessorProfile }> => {
     if (!userData.email?.endsWith('@goa.bits-pilani.ac.in')) {
-      throw new Error('Only BITS Pilani Goa campus emails are allowed');
+      return { success: false, error: 'Only BITS Pilani Goa campus emails are allowed' };
+    }
+    
+    // Ensure required fields are set
+    if (!userData.role) {
+      return { success: false, error: 'Role is required' };
     }
     
     const id = `user${Math.floor(Math.random() * 10000)}`;
-    const newUser = {
-      ...userData,
-      id,
-      createdAt: new Date()
-    };
+    const createdAt = new Date();
+    
+    let newUser: StudentProfile | ProfessorProfile;
     
     if (userData.role === 'student') {
-      students.push(newUser as StudentProfile);
+      newUser = {
+        id,
+        fullName: userData.fullName || '',
+        idNumber: userData.idNumber || '',
+        email: userData.email || '',
+        whatsappNumber: userData.whatsappNumber || '',
+        role: 'student',
+        cgpa: (userData as Partial<StudentProfile>).cgpa || 0,
+        createdAt,
+        ...(userData as Partial<StudentProfile>)
+      } as StudentProfile;
+      students.push(newUser);
     } else {
-      professors.push(newUser as ProfessorProfile);
+      newUser = {
+        id,
+        fullName: userData.fullName || '',
+        idNumber: userData.idNumber || '',
+        email: userData.email || '',
+        whatsappNumber: userData.whatsappNumber || '',
+        role: 'professor',
+        designation: (userData as Partial<ProfessorProfile>).designation || 'Assistant Professor',
+        department: (userData as Partial<ProfessorProfile>).department || '',
+        chamberNumber: (userData as Partial<ProfessorProfile>).chamberNumber || '',
+        createdAt,
+        ...(userData as Partial<ProfessorProfile>)
+      } as ProfessorProfile;
+      professors.push(newUser);
     }
     
     currentUser = id;
     return { success: true, user: newUser };
   },
   
-  logout: () => {
+  logout: (): ServiceResponse<null> => {
     currentUser = null;
     return { success: true };
   },
   
-  getCurrentUser: () => {
+  getCurrentUser: (): StudentProfile | ProfessorProfile | null => {
     if (!currentUser) return null;
     
     const student = students.find(s => s.id === currentUser);
@@ -237,14 +269,24 @@ export const mockDataService = {
   },
   
   // Profile management
-  updateStudentProfile: (id: string, data: Partial<StudentProfile>) => {
-    students = students.map(s => s.id === id ? { ...s, ...data } : s);
-    return { success: true, profile: students.find(s => s.id === id) };
+  updateStudentProfile: (id: string, data: Partial<StudentProfile>): ServiceResponse<{ profile: StudentProfile | null }> => {
+    const studentIndex = students.findIndex(s => s.id === id);
+    if (studentIndex === -1) {
+      return { success: false, error: 'Student not found', profile: null };
+    }
+    
+    students[studentIndex] = { ...students[studentIndex], ...data };
+    return { success: true, profile: students[studentIndex] };
   },
   
-  updateProfessorProfile: (id: string, data: Partial<ProfessorProfile>) => {
-    professors = professors.map(p => p.id === id ? { ...p, ...data } : p);
-    return { success: true, profile: professors.find(p => p.id === id) };
+  updateProfessorProfile: (id: string, data: Partial<ProfessorProfile>): ServiceResponse<{ profile: ProfessorProfile | null }> => {
+    const professorIndex = professors.findIndex(p => p.id === id);
+    if (professorIndex === -1) {
+      return { success: false, error: 'Professor not found', profile: null };
+    }
+    
+    professors[professorIndex] = { ...professors[professorIndex], ...data };
+    return { success: true, profile: professors[professorIndex] };
   },
   
   // Position management

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePositions } from "@/contexts/PositionsContext";
+import { ProfessorProfile } from "@/lib/types";
 
 const credits = [1, 2, 3, 4, 5, 6, 9];
 const semesters = [
@@ -79,6 +79,17 @@ const CreatePosition = () => {
       });
       return;
     }
+
+    if (!user || user.role !== 'professor') {
+      toast({
+        title: "Authentication Error",
+        description: "You must be logged in as a professor to create a position.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const professorUser = user as ProfessorProfile;
     
     try {
       setIsSubmitting(true);
@@ -86,7 +97,11 @@ const CreatePosition = () => {
       await createPosition({
         ...formData,
         credits: parseInt(formData.credits),
-        minimumCGPA: cgpa
+        minimumCGPA: cgpa,
+        professorId: professorUser.id,
+        professorName: professorUser.fullName,
+        department: professorUser.department,
+        status: "open"
       });
       
       toast({

@@ -43,7 +43,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const response = await mockDataService.login(email, password);
       if (response.success) {
-        setUser(response.user);
+        // Ensure user has required fields by asserting its shape
+        if (
+          response.user && 
+          typeof response.user.id === 'string' && 
+          response.user.role
+        ) {
+          setUser(response.user as User);
+        } else {
+          throw new Error("Invalid user data received");
+        }
       } else {
         setError(response.error || "Login failed");
       }
@@ -61,7 +70,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const response = await mockDataService.register(userData);
       if (response.success) {
-        setUser(response.user);
+        // Ensure user has required fields
+        if (
+          response.user && 
+          typeof response.user.id === 'string' && 
+          response.user.role
+        ) {
+          setUser(response.user as User);
+        } else {
+          throw new Error("Invalid user data received");
+        }
       } else {
         setError(response.error || "Registration failed");
       }
@@ -90,13 +108,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       let response;
       if (user.role === "student") {
-        response = await mockDataService.updateStudentProfile(user.id, data);
+        response = await mockDataService.updateStudentProfile(user.id, data as Partial<User>);
       } else {
-        response = await mockDataService.updateProfessorProfile(user.id, data);
+        response = await mockDataService.updateProfessorProfile(user.id, data as Partial<User>);
       }
       
       if (response.success) {
         setUser(response.profile);
+      } else {
+        setError(response.error || "Profile update failed");
       }
     } catch (err) {
       console.error("Profile update failed:", err);

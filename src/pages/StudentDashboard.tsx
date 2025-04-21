@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
@@ -115,6 +114,14 @@ const StudentDashboard = () => {
       case "shortlisted": return "bg-bits-success";
       case "rejected": return "bg-bits-error";
       default: return "";
+    }
+  };
+
+  // Fix for Element.click() TypeScript error
+  const switchToPositionsTab = () => {
+    const positionsTab = document.querySelector("[data-value='positions']") as HTMLElement;
+    if (positionsTab) {
+      positionsTab.click();
     }
   };
 
@@ -323,10 +330,8 @@ const StudentDashboard = () => {
             ) : myApplications.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-gray-500">You haven't applied to any research positions yet.</p>
-                <Button className="mt-4 bg-bits-blue hover:bg-bits-darkblue" asChild>
-                  <Link to="#" onClick={() => document.querySelector("[data-value='positions']")?.click()}>
-                    Browse Available Positions
-                  </Link>
+                <Button className="mt-4 bg-bits-blue hover:bg-bits-darkblue" onClick={switchToPositionsTab}>
+                  Browse Available Positions
                 </Button>
               </div>
             ) : (
