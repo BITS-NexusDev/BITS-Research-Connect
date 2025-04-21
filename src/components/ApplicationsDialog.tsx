@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -41,43 +41,55 @@ const ApplicationsDialog: React.FC<ApplicationsDialogProps> = ({
   getStatusColor,
   handleStatusUpdate,
   handleDemoStatusUpdate,
-}) => (
-  <Dialog>
-    <DialogTrigger asChild>
-      <Button
-        className="flex-1 bg-bits-blue hover:bg-bits-darkblue"
-        onClick={() => setSelectedPositionId(position.id)}
-      >
-        {triggerLabel}
-      </Button>
-    </DialogTrigger>
-    <DialogContent className="sm:max-w-4xl">
-      <DialogHeader>
-        <DialogTitle>Applications for {position.researchArea}</DialogTitle>
-        <DialogDescription>
-          {position.courseCode} • {position.credits} Credits • {position.semester}
-        </DialogDescription>
-      </DialogHeader>
-      <div className="py-4">
-        {applications.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-gray-500">No applications received yet.</p>
-          </div>
-        ) : (
-          <ScrollArea className="h-[400px] rounded-md border p-4">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Student</TableHead>
-                  <TableHead>CGPA</TableHead>
-                  <TableHead>Branch</TableHead>
-                  <TableHead className="w-[100px]">Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {selectedPositionId &&
-                  applications.map((app) => (
+}) => {
+  const [open, setOpen] = React.useState(false);
+
+  // Ensure applications are being shown for the position when dialog opens
+  useEffect(() => {
+    if (open) {
+      setSelectedPositionId(position.id);
+    }
+  }, [open, position.id, setSelectedPositionId]);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button
+          className="flex-1 bg-bits-blue hover:bg-bits-darkblue"
+          onClick={() => {
+            console.log(`Opening dialog for position ${position.id}`);
+            setSelectedPositionId(position.id);
+          }}
+        >
+          {triggerLabel}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-4xl">
+        <DialogHeader>
+          <DialogTitle>Applications for {position.researchArea}</DialogTitle>
+          <DialogDescription>
+            {position.courseCode} • {position.credits} Credits • {position.semester}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="py-4">
+          {applications.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500">No applications received yet.</p>
+            </div>
+          ) : (
+            <ScrollArea className="h-[400px] rounded-md border p-4">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Student</TableHead>
+                    <TableHead>CGPA</TableHead>
+                    <TableHead>Branch</TableHead>
+                    <TableHead className="w-[100px]">Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {applications.map((app) => (
                     <TableRow key={app.id}>
                       <TableCell>
                         <div className="font-medium">{app.fullName}</div>
@@ -97,9 +109,10 @@ const ApplicationsDialog: React.FC<ApplicationsDialogProps> = ({
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() =>
-                                  handleDemoStatusUpdate(position.id, app.id, "shortlisted")
-                                }
+                                onClick={() => {
+                                  console.log(`Updating demo application ${app.id} to shortlisted`);
+                                  handleDemoStatusUpdate(position.id, app.id, "shortlisted");
+                                }}
                                 disabled={app.status === "shortlisted"}
                               >
                                 Shortlist
@@ -107,9 +120,10 @@ const ApplicationsDialog: React.FC<ApplicationsDialogProps> = ({
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() =>
-                                  handleDemoStatusUpdate(position.id, app.id, "rejected")
-                                }
+                                onClick={() => {
+                                  console.log(`Updating demo application ${app.id} to rejected`);
+                                  handleDemoStatusUpdate(position.id, app.id, "rejected");
+                                }}
                                 className="text-bits-error border-bits-error hover:bg-red-50"
                                 disabled={app.status === "rejected"}
                               >
@@ -141,13 +155,14 @@ const ApplicationsDialog: React.FC<ApplicationsDialogProps> = ({
                       </TableCell>
                     </TableRow>
                   ))}
-              </TableBody>
-            </Table>
-          </ScrollArea>
-        )}
-      </div>
-    </DialogContent>
-  </Dialog>
-);
+                </TableBody>
+              </Table>
+            </ScrollArea>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 export default ApplicationsDialog;

@@ -62,6 +62,26 @@ const ProfessorDashboard = () => {
     }
   }, [user, navigate]);
 
+  useEffect(() => {
+    // Initialize demo applications for each position when positions load
+    if (myPositions.length > 0) {
+      const initialDemoStates: { [positionId: string]: Application[] } = {};
+      myPositions.forEach(position => {
+        const apps = getApplicationsForPosition(position.id);
+        if (apps.length === 0) {
+          initialDemoStates[position.id] = DEMO_APPLICATIONS.map((app, idx) => ({
+            ...app,
+            id: `demo-${position.id}-${idx}`,
+            positionId: position.id,
+          }));
+        }
+      });
+      if (Object.keys(initialDemoStates).length > 0) {
+        setDemoAppStates(prev => ({ ...prev, ...initialDemoStates }));
+      }
+    }
+  }, [myPositions]);
+
   if (!user || user.role !== "professor") {
     return null;
   }
@@ -123,16 +143,28 @@ const ProfessorDashboard = () => {
   const getDisplayedApplications = (positionId: string) => {
     const realApps = getApplicationsForPosition(positionId);
     if (realApps.length > 0) return realApps;
+    
+    // If no real applications and no demo applications yet for this position, create them
     if (!demoAppStates[positionId]) {
       const demoForPosition = DEMO_APPLICATIONS.map((a, idx) => ({
         ...a,
         id: `demo-${positionId}-${idx}`,
         positionId,
       }));
-      setDemoAppStates((prev) => ({ ...prev, [positionId]: demoForPosition }));
+      
+      // Update the demo applications state
+      setDemoAppStates(prev => {
+        const newState = { ...prev, [positionId]: demoForPosition };
+        console.log(`Adding demo applications for position ${positionId}:`, newState);
+        return newState;
+      });
+      
+      // Return the newly created demos
       return demoForPosition;
     }
-    return demoAppStates[positionId];
+    
+    // Return existing demos for this position
+    return demoAppStates[positionId] || [];
   };
 
   const handleDemoStatusUpdate = (
@@ -140,12 +172,17 @@ const ProfessorDashboard = () => {
     applicationId: string,
     status: "pending" | "shortlisted" | "rejected"
   ) => {
-    setDemoAppStates(prev => ({
-      ...prev,
-      [positionId]: prev[positionId].map(app =>
-        app.id === applicationId ? { ...app, status } : app
-      )
-    }));
+    setDemoAppStates(prev => {
+      const updated = {
+        ...prev,
+        [positionId]: (prev[positionId] || []).map(app =>
+          app.id === applicationId ? { ...app, status } : app
+        )
+      };
+      console.log(`Updated demo application ${applicationId} status to ${status}:`, updated[positionId]);
+      return updated;
+    });
+    
     toast({
       title: "Demo Status Updated",
       description: `Demo application status updated to ${status}`,
@@ -193,4 +230,3 @@ const ProfessorDashboard = () => {
 };
 
 export default ProfessorDashboard;
-
