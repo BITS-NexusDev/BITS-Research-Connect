@@ -9,7 +9,191 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      applications: {
+        Row: {
+          btech_branch: string | null
+          cgpa: number
+          created_at: string
+          dual_degree: string | null
+          email: string
+          full_name: string
+          id: string
+          id_number: string
+          minor_degree: string | null
+          pitch: string
+          position_id: string
+          status: string
+          student_id: string
+          whatsapp_number: string
+        }
+        Insert: {
+          btech_branch?: string | null
+          cgpa: number
+          created_at?: string
+          dual_degree?: string | null
+          email: string
+          full_name: string
+          id?: string
+          id_number: string
+          minor_degree?: string | null
+          pitch: string
+          position_id: string
+          status: string
+          student_id: string
+          whatsapp_number: string
+        }
+        Update: {
+          btech_branch?: string | null
+          cgpa?: number
+          created_at?: string
+          dual_degree?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          id_number?: string
+          minor_degree?: string | null
+          pitch?: string
+          position_id?: string
+          status?: string
+          student_id?: string
+          whatsapp_number?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applications_position_id_fkey"
+            columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "research_positions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "applications_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          btech_branch: string | null
+          cgpa: number | null
+          chamber_number: string | null
+          created_at: string
+          department: string | null
+          designation:
+            | Database["public"]["Enums"]["professor_designation"]
+            | null
+          dual_degree: string | null
+          email: string
+          full_name: string
+          id: string
+          id_number: string
+          minor_degree: string | null
+          research_interests: string | null
+          role: string
+          whatsapp_number: string | null
+        }
+        Insert: {
+          btech_branch?: string | null
+          cgpa?: number | null
+          chamber_number?: string | null
+          created_at?: string
+          department?: string | null
+          designation?:
+            | Database["public"]["Enums"]["professor_designation"]
+            | null
+          dual_degree?: string | null
+          email: string
+          full_name: string
+          id: string
+          id_number: string
+          minor_degree?: string | null
+          research_interests?: string | null
+          role: string
+          whatsapp_number?: string | null
+        }
+        Update: {
+          btech_branch?: string | null
+          cgpa?: number | null
+          chamber_number?: string | null
+          created_at?: string
+          department?: string | null
+          designation?:
+            | Database["public"]["Enums"]["professor_designation"]
+            | null
+          dual_degree?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          id_number?: string
+          minor_degree?: string | null
+          research_interests?: string | null
+          role?: string
+          whatsapp_number?: string | null
+        }
+        Relationships: []
+      }
+      research_positions: {
+        Row: {
+          course_code: string
+          created_at: string
+          credits: number
+          department: string
+          id: string
+          minimum_cgpa: number
+          prerequisites: string | null
+          professor_id: string
+          professor_name: string
+          research_area: string
+          semester: string
+          specific_requirements: string | null
+          status: string
+          summary: string
+        }
+        Insert: {
+          course_code: string
+          created_at?: string
+          credits: number
+          department: string
+          id?: string
+          minimum_cgpa: number
+          prerequisites?: string | null
+          professor_id: string
+          professor_name: string
+          research_area: string
+          semester: string
+          specific_requirements?: string | null
+          status: string
+          summary: string
+        }
+        Update: {
+          course_code?: string
+          created_at?: string
+          credits?: number
+          department?: string
+          id?: string
+          minimum_cgpa?: number
+          prerequisites?: string | null
+          professor_id?: string
+          professor_name?: string
+          research_area?: string
+          semester?: string
+          specific_requirements?: string | null
+          status?: string
+          summary?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "research_positions_professor_id_fkey"
+            columns: ["professor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +202,12 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      professor_designation:
+        | "Professor"
+        | "Senior Professor"
+        | "Associate Professor"
+        | "Assistant Professor"
+        | "Junior Professor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +322,14 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      professor_designation: [
+        "Professor",
+        "Senior Professor",
+        "Associate Professor",
+        "Assistant Professor",
+        "Junior Professor",
+      ],
+    },
   },
 } as const

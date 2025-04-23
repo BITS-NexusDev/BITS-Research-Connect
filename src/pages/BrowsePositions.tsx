@@ -119,12 +119,12 @@ const BrowsePositions = () => {
           ) : (
             <div className="space-y-6">
               {filteredPositions.map(position => (
-                <Card key={position.id} className="overflow-hidden">
-                  <CardHeader className="pb-2 bg-gray-50 border-b">
+                <Card key={position.id}>
+                  <CardHeader>
                     <div className="flex justify-between items-start">
                       <div>
-                        <CardTitle className="text-bits-blue text-lg">{position.researchArea}</CardTitle>
-                        <CardDescription className="font-medium">{position.courseCode} • {position.credits} Credits</CardDescription>
+                        <CardTitle className="text-bits-blue">{position.researchArea}</CardTitle>
+                        <CardDescription>{position.courseCode} • {position.credits} Credits</CardDescription>
                       </div>
                       <Badge variant="outline" className="bg-bits-lightblue text-bits-darkblue">
                         {position.department}
@@ -132,7 +132,7 @@ const BrowsePositions = () => {
                     </div>
                   </CardHeader>
                   
-                  <CardContent className="pt-4">
+                  <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                       <div>
                         <p className="text-sm font-medium text-gray-500">Professor</p>
