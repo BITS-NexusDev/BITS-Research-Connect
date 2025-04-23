@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { ResearchPosition, Application } from "@/lib/types";
 import { mockDataService } from "@/lib/mock-data";
@@ -109,6 +110,11 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setError(null);
     
     try {
+      // Convert Date object to ISO string for Supabase
+      const lastDateToApply = data.lastDateToApply instanceof Date 
+        ? data.lastDateToApply.toISOString().split('T')[0]
+        : data.lastDateToApply;
+
       const { data: newPosition, error } = await supabase
         .from('research_positions')
         .insert({
@@ -126,7 +132,7 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           department: user.department,
           eligible_branches: data.eligibleBranches,
           number_of_openings: data.numberOfOpenings,
-          last_date_to_apply: data.lastDateToApply
+          last_date_to_apply: lastDateToApply
         })
         .select()
         .single();
@@ -192,7 +198,12 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (data.status !== undefined) updateData.status = data.status;
       if (data.eligibleBranches !== undefined) updateData.eligible_branches = data.eligibleBranches;
       if (data.numberOfOpenings !== undefined) updateData.number_of_openings = data.numberOfOpenings;
-      if (data.lastDateToApply !== undefined) updateData.last_date_to_apply = data.lastDateToApply;
+      if (data.lastDateToApply !== undefined) {
+        // Convert Date object to ISO string for Supabase
+        updateData.last_date_to_apply = data.lastDateToApply instanceof Date 
+          ? data.lastDateToApply.toISOString().split('T')[0] 
+          : data.lastDateToApply;
+      }
       
       const { data: updatedPosition, error } = await supabase
         .from('research_positions')
