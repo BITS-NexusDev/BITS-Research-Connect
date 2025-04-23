@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { ResearchPosition, Application } from "@/lib/types";
 import { mockDataService } from "@/lib/mock-data";
@@ -45,8 +46,46 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       if (applicationsError) throw applicationsError;
 
-      setPositions(positionsData);
-      setApplications(applicationsData);
+      // Map the data to match our TypeScript types
+      const mappedPositions: ResearchPosition[] = positionsData.map(p => ({
+        id: p.id,
+        professorId: p.professor_id,
+        professorName: p.professor_name,
+        researchArea: p.research_area,
+        courseCode: p.course_code,
+        credits: p.credits,
+        semester: p.semester,
+        prerequisites: p.prerequisites,
+        minimumCGPA: p.minimum_cgpa,
+        summary: p.summary,
+        specificRequirements: p.specific_requirements,
+        createdAt: new Date(p.created_at),
+        status: p.status,
+        department: p.department,
+        eligibleBranches: p.eligible_branches,
+        numberOfOpenings: p.number_of_openings,
+        lastDateToApply: new Date(p.last_date_to_apply)
+      }));
+
+      const mappedApplications: Application[] = applicationsData.map(a => ({
+        id: a.id,
+        positionId: a.position_id,
+        studentId: a.student_id,
+        fullName: a.full_name,
+        idNumber: a.id_number,
+        email: a.email,
+        btechBranch: a.btech_branch,
+        dualDegree: a.dual_degree,
+        minorDegree: a.minor_degree,
+        whatsappNumber: a.whatsapp_number,
+        cgpa: a.cgpa,
+        pitch: a.pitch,
+        status: a.status,
+        createdAt: new Date(a.created_at)
+      }));
+
+      setPositions(mappedPositions);
+      setApplications(mappedApplications);
     } catch (err) {
       console.error("Error fetching positions:", err);
       setError("Failed to fetch research positions");
