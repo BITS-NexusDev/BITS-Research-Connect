@@ -60,7 +60,7 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         summary: p.summary,
         specificRequirements: p.specific_requirements,
         createdAt: new Date(p.created_at),
-        status: p.status,
+        status: p.status as "open" | "closed", // Type assertion to match the expected type
         department: p.department,
         eligibleBranches: p.eligible_branches,
         numberOfOpenings: p.number_of_openings,
@@ -80,7 +80,7 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         whatsappNumber: a.whatsapp_number,
         cgpa: a.cgpa,
         pitch: a.pitch,
-        status: a.status,
+        status: a.status as "pending" | "shortlisted" | "rejected", // Type assertion to match the expected type
         createdAt: new Date(a.created_at)
       }));
 
