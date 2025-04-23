@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { ResearchPosition, Application } from "@/lib/types";
 import { mockDataService } from "@/lib/mock-data";
 import { useAuth } from "./AuthContext";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PositionsContextType {
   positions: ResearchPosition[];
@@ -248,7 +248,6 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  // Filtered data based on user role
   const myPositions = user?.role === "professor" 
     ? positions.filter(p => p.professorId === user.id)
     : [];

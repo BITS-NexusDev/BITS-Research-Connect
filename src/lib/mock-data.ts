@@ -98,7 +98,10 @@ export const mockPositions: ResearchPosition[] = [
     specificRequirements: "Proficiency in Python and PyTorch/TensorFlow is required.",
     createdAt: new Date("2024-04-01"),
     status: "open",
-    department: "Computer Science"
+    department: "Computer Science",
+    eligibleBranches: ["A5 - Computer Science", "A7 - Electronics & Communication"],
+    numberOfOpenings: 2,
+    lastDateToApply: new Date("2024-06-30")
   },
   {
     id: "pos2",
@@ -113,7 +116,10 @@ export const mockPositions: ResearchPosition[] = [
     summary: "Simulation of fluid flow and heat transfer in microchannels.",
     createdAt: new Date("2024-04-02"),
     status: "open",
-    department: "Mechanical Engineering"
+    department: "Mechanical Engineering",
+    eligibleBranches: ["A2 - Civil", "A4 - Mechanical"],
+    numberOfOpenings: 3,
+    lastDateToApply: new Date("2024-07-15")
   },
   {
     id: "pos3",
@@ -129,7 +135,10 @@ export const mockPositions: ResearchPosition[] = [
     specificRequirements: "Familiarity with statistical software (R/STATA) is preferred.",
     createdAt: new Date("2024-04-03"),
     status: "open",
-    department: "Economics"
+    department: "Economics",
+    eligibleBranches: ["A1 - Chemical", "A5 - Computer Science"],
+    numberOfOpenings: 1,
+    lastDateToApply: new Date("2024-08-01")
   }
 ];
 

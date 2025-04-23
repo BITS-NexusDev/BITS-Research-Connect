@@ -1,8 +1,10 @@
+
 import React from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
+import { Trash2 } from "lucide-react";
 import ApplicationsDialog from "./ApplicationsDialog";
 import { ResearchPosition, Application } from "@/lib/types";
 
@@ -23,6 +25,7 @@ interface ResearchPositionCardProps {
   handleStatusUpdate: (applicationId: string, status: "pending" | "shortlisted" | "rejected") => void;
   handleDemoStatusUpdate: (positionId: string, applicationId: string, status: "pending" | "shortlisted" | "rejected") => void;
   isDemo?: boolean;
+  onDelete?: (id: string) => void;
 }
 
 const ResearchPositionCard: React.FC<ResearchPositionCardProps> = ({
@@ -34,6 +37,8 @@ const ResearchPositionCard: React.FC<ResearchPositionCardProps> = ({
   getStatusColor,
   handleStatusUpdate,
   handleDemoStatusUpdate,
+  isDemo,
+  onDelete
 }) => (
   <Card>
     <CardHeader>
@@ -119,17 +124,31 @@ const ResearchPositionCard: React.FC<ResearchPositionCardProps> = ({
       )}
     </CardContent>
     
-    <CardFooter className="flex flex-wrap gap-4">
-      <ApplicationsDialog
-        position={position}
-        triggerLabel={`View Applications (${counts.total})`}
-        applications={applications}
-        selectedPositionId={selectedPositionId}
-        setSelectedPositionId={setSelectedPositionId}
-        getStatusColor={getStatusColor}
-        handleStatusUpdate={handleStatusUpdate}
-        handleDemoStatusUpdate={handleDemoStatusUpdate}
-      />
+    <CardFooter className="flex flex-wrap gap-4 justify-between">
+      <div className="flex flex-wrap gap-4">
+        <ApplicationsDialog
+          position={position}
+          triggerLabel={`View Applications (${counts.total})`}
+          applications={applications}
+          selectedPositionId={selectedPositionId}
+          setSelectedPositionId={setSelectedPositionId}
+          getStatusColor={getStatusColor}
+          handleStatusUpdate={handleStatusUpdate}
+          handleDemoStatusUpdate={handleDemoStatusUpdate}
+        />
+      </div>
+      
+      {onDelete && (
+        <Button 
+          variant="outline"
+          size="sm"
+          className="text-bits-error border-bits-error hover:bg-red-50"
+          onClick={() => onDelete(position.id)}
+        >
+          <Trash2 className="h-4 w-4 mr-1" />
+          Delete
+        </Button>
+      )}
     </CardFooter>
   </Card>
 );
