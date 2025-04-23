@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { ResearchPosition, Application } from "@/lib/types";
 import { mockDataService } from "@/lib/mock-data";
@@ -34,17 +33,28 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const refreshPositions = async () => {
     setLoading(true);
     try {
+      console.log("Refreshing positions and applications data...");
       const { data: positionsData, error: positionsError } = await supabase
         .from('research_positions')
         .select('*');
 
-      if (positionsError) throw positionsError;
+      if (positionsError) {
+        console.error("Error fetching positions:", positionsError);
+        throw positionsError;
+      }
+
+      console.log("Positions data received:", positionsData);
 
       const { data: applicationsData, error: applicationsError } = await supabase
         .from('applications')
         .select('*');
 
-      if (applicationsError) throw applicationsError;
+      if (applicationsError) {
+        console.error("Error fetching applications:", applicationsError);
+        throw applicationsError;
+      }
+
+      console.log("Applications data received:", applicationsData);
 
       const mappedPositions: ResearchPosition[] = positionsData.map(p => ({
         id: p.id,
@@ -85,8 +95,9 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       setPositions(mappedPositions);
       setApplications(mappedApplications);
+      console.log("Data refresh complete. Positions:", mappedPositions.length, "Applications:", mappedApplications.length);
     } catch (err) {
-      console.error("Error fetching positions:", err);
+      console.error("Error in refreshPositions:", err);
       setError("Failed to fetch research positions");
     } finally {
       setLoading(false);
@@ -110,35 +121,45 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setError(null);
     
     try {
+      console.log("Creating position with data:", data);
+      
       // Convert Date object to ISO string for Supabase
       const lastDateToApply = data.lastDateToApply instanceof Date 
         ? data.lastDateToApply.toISOString().split('T')[0]
         : data.lastDateToApply;
 
+      const insertData = {
+        professor_id: user.id,
+        professor_name: user.fullName,
+        research_area: data.researchArea,
+        course_code: data.courseCode,
+        credits: data.credits,
+        semester: data.semester,
+        prerequisites: data.prerequisites || null,
+        minimum_cgpa: data.minimumCGPA,
+        summary: data.summary,
+        specific_requirements: data.specificRequirements || null,
+        status: 'open',
+        department: user.department,
+        eligible_branches: data.eligibleBranches,
+        number_of_openings: data.numberOfOpenings,
+        last_date_to_apply: lastDateToApply
+      };
+
+      console.log("Sending data to Supabase:", insertData);
+
       const { data: newPosition, error } = await supabase
         .from('research_positions')
-        .insert({
-          professor_id: user.id,
-          professor_name: user.fullName,
-          research_area: data.researchArea,
-          course_code: data.courseCode,
-          credits: data.credits,
-          semester: data.semester,
-          prerequisites: data.prerequisites || null,
-          minimum_cgpa: data.minimumCGPA,
-          summary: data.summary,
-          specific_requirements: data.specificRequirements || null,
-          status: 'open',
-          department: user.department,
-          eligible_branches: data.eligibleBranches,
-          number_of_openings: data.numberOfOpenings,
-          last_date_to_apply: lastDateToApply
-        })
+        .insert(insertData)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error creating position:", error);
+        throw error;
+      }
       
+      console.log("Position created successfully:", newPosition);
       await refreshPositions();
       
       const mappedPosition: ResearchPosition = {
@@ -185,6 +206,7 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setError(null);
     
     try {
+      console.log("Updating position:", id, "with data:", data);
       const updateData: any = {};
       
       if (data.researchArea !== undefined) updateData.research_area = data.researchArea;
@@ -205,6 +227,8 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           : data.lastDateToApply;
       }
       
+      console.log("Sending update data to Supabase:", updateData);
+      
       const { data: updatedPosition, error } = await supabase
         .from('research_positions')
         .update(updateData)
@@ -212,8 +236,12 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         .select()
         .single();
         
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating position:", error);
+        throw error;
+      }
       
+      console.log("Position updated successfully:", updatedPosition);
       await refreshPositions();
       
       const mappedPosition: ResearchPosition = {
@@ -255,13 +283,18 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setError(null);
     
     try {
+      console.log("Deleting position:", id);
       const { error } = await supabase
         .from('research_positions')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error deleting position:", error);
+        throw error;
+      }
       
+      console.log("Position deleted successfully");
       refreshPositions();
     } catch (err) {
       console.error("Delete position failed:", err);
@@ -302,6 +335,7 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setError(null);
     
     try {
+      console.log("Creating application for position:", positionId);
       if (hasApplied(positionId)) {
         throw new Error("You have already applied for this position");
       }
@@ -315,27 +349,35 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         throw new Error(`Your CGPA (${user.cgpa}) does not meet the minimum requirement (${position.minimumCGPA})`);
       }
       
+      const applicationData = {
+        position_id: positionId,
+        student_id: user.id,
+        full_name: user.fullName,
+        id_number: user.idNumber,
+        email: user.email,
+        whatsapp_number: user.whatsappNumber,
+        btech_branch: user.btechBranch,
+        dual_degree: user.dualDegree,
+        minor_degree: user.minorDegree,
+        cgpa: user.cgpa,
+        pitch,
+        resume_link: resumeLink,
+        status: 'pending'
+      };
+      
+      console.log("Sending application data to Supabase:", applicationData);
+      
       const { data, error } = await supabase
         .from('applications')
-        .insert({
-          position_id: positionId,
-          student_id: user.id,
-          full_name: user.fullName,
-          id_number: user.idNumber,
-          email: user.email,
-          whatsapp_number: user.whatsappNumber,
-          btech_branch: user.btechBranch,
-          dual_degree: user.dualDegree,
-          minor_degree: user.minorDegree,
-          cgpa: user.cgpa,
-          pitch,
-          resume_link: resumeLink,
-          status: 'pending'
-        });
+        .insert(applicationData);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error creating application:", error);
+        throw error;
+      }
       
-      refreshPositions();
+      console.log("Application created successfully");
+      await refreshPositions();
     } catch (err) {
       console.error("Application creation failed:", err);
       setError(err instanceof Error ? err.message : "Failed to submit application");
@@ -364,13 +406,18 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setError(null);
     
     try {
+      console.log("Updating application status:", applicationId, "to", status);
       const { error } = await supabase
         .from('applications')
         .update({ status })
         .eq('id', applicationId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating application status:", error);
+        throw error;
+      }
       
+      console.log("Application status updated successfully");
       await refreshPositions();
     } catch (err) {
       console.error("Update application status failed:", err);
