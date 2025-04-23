@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,25 +11,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePositions } from "@/contexts/PositionsContext";
 import { ProfessorProfile } from "@/lib/types";
+import { courseCodeList, courseIDList, semesterList } from "@/lib/constants";
 
 const credits = [1, 2, 3, 4, 5, 6, 9];
-const semesters = [
-  "Academic Year 24-25 Semester-1",
-  "Academic Year 24-25 Semester-2",
-  "Academic Year 25-26 Semester-1",
-  "Academic Year 25-26 Semester-2"
-];
-
-const bTechBranches = [
-  'A1 - Chemical',
-  'A2 - Civil',
-  'A3 - Electrical & Electronics',
-  'A4 - Mechanical',
-  'A5 - Computer Science',
-  'A6 - Electronics & Instrumentation',
-  'A7 - Electronics & Communication',
-  'A8 - Manufacturing'
-];
 
 const CreatePosition = () => {
   const { user } = useAuth();
@@ -39,7 +23,8 @@ const CreatePosition = () => {
   
   const [formData, setFormData] = useState({
     researchArea: "",
-    courseCode: "",
+    coursePrefix: "",
+    courseNumber: "",
     credits: "",
     semester: "",
     prerequisites: "",
@@ -72,7 +57,7 @@ const CreatePosition = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.researchArea || !formData.courseCode || !formData.credits || 
+    if (!formData.researchArea || !formData.coursePrefix || !formData.courseNumber || !formData.credits || 
         !formData.semester || !formData.minimumCGPA || !formData.summary ||
         !formData.lastDateToApply || formData.eligibleBranches.length === 0) {
       toast({
@@ -109,10 +94,11 @@ const CreatePosition = () => {
       
       await createPosition({
         ...formData,
+        course_code: `${formData.coursePrefix} ${formData.courseNumber}`,
         credits: parseInt(formData.credits),
-        minimumCGPA: cgpa,
+        minimumCGPA: parseFloat(formData.minimumCGPA),
         numberOfOpenings: parseInt(formData.numberOfOpenings),
-        department: professorUser.department,
+        department: (user as ProfessorProfile).department,
         lastDateToApply: new Date(formData.lastDateToApply)
       });
       
@@ -160,17 +146,41 @@ const CreatePosition = () => {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="courseCode">Course Code*</Label>
-                  <Input
-                    id="courseCode"
-                    name="courseCode"
-                    placeholder="e.g., CS F266"
-                    value={formData.courseCode}
-                    onChange={handleChange}
-                    required
-                  />
+                  <Label htmlFor="coursePrefix">Course Code*</Label>
+                  <Select 
+                    value={formData.coursePrefix}
+                    onValueChange={(value) => handleSelectChange("coursePrefix", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select prefix" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {courseCodeList.map((code) => (
+                        <SelectItem key={code} value={code}>{code}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 
+                <div className="space-y-2">
+                  <Label htmlFor="courseNumber">Course Number*</Label>
+                  <Select 
+                    value={formData.courseNumber}
+                    onValueChange={(value) => handleSelectChange("courseNumber", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select number" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {courseIDList.map((id) => (
+                        <SelectItem key={id} value={id}>{id}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="credits">Credits*</Label>
                   <Select 
@@ -187,23 +197,23 @@ const CreatePosition = () => {
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="semester">Semester*</Label>
-                <Select 
-                  value={formData.semester} 
-                  onValueChange={(value) => handleSelectChange("semester", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select semester" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {semesters.map((semester) => (
-                      <SelectItem key={semester} value={semester}>{semester}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="semester">Semester*</Label>
+                  <Select 
+                    value={formData.semester} 
+                    onValueChange={(value) => handleSelectChange("semester", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select semester" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {semesterList.map((semester) => (
+                        <SelectItem key={semester} value={semester}>{semester}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               
               <div className="space-y-2">
