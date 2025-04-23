@@ -109,20 +109,53 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setError(null);
     
     try {
-      const result = mockDataService.createPosition({
-        ...data,
-        professorId: user.id,
-        professorName: user.fullName,
-        department: user.department,
-        status: "open"
-      });
+      const { data: newPosition, error } = await supabase
+        .from('research_positions')
+        .insert({
+          professor_id: user.id,
+          professor_name: user.fullName,
+          research_area: data.researchArea,
+          course_code: data.courseCode,
+          credits: data.credits,
+          semester: data.semester,
+          prerequisites: data.prerequisites || null,
+          minimum_cgpa: data.minimumCGPA,
+          summary: data.summary,
+          specific_requirements: data.specificRequirements || null,
+          status: 'open',
+          department: user.department,
+          eligible_branches: data.eligibleBranches,
+          number_of_openings: data.numberOfOpenings,
+          last_date_to_apply: data.lastDateToApply
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
       
-      if (result.success) {
-        refreshPositions();
-        return result.position;
-      } else {
-        throw new Error("Failed to create position");
-      }
+      await refreshPositions();
+      
+      const mappedPosition: ResearchPosition = {
+        id: newPosition.id,
+        professorId: newPosition.professor_id,
+        professorName: newPosition.professor_name,
+        researchArea: newPosition.research_area,
+        courseCode: newPosition.course_code,
+        credits: newPosition.credits,
+        semester: newPosition.semester,
+        prerequisites: newPosition.prerequisites,
+        minimumCGPA: newPosition.minimum_cgpa,
+        summary: newPosition.summary,
+        specificRequirements: newPosition.specific_requirements,
+        createdAt: new Date(newPosition.created_at),
+        status: newPosition.status as "open" | "closed",
+        department: newPosition.department,
+        eligibleBranches: newPosition.eligible_branches,
+        numberOfOpenings: newPosition.number_of_openings,
+        lastDateToApply: new Date(newPosition.last_date_to_apply)
+      };
+      
+      return mappedPosition;
     } catch (err) {
       console.error("Create position failed:", err);
       setError("Failed to create position");
@@ -146,12 +179,53 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setError(null);
     
     try {
-      const result = mockDataService.updatePosition(id, data);
-      if (result.success) {
-        refreshPositions();
-        return result.position;
-      }
-      return undefined;
+      const updateData: any = {};
+      
+      if (data.researchArea !== undefined) updateData.research_area = data.researchArea;
+      if (data.courseCode !== undefined) updateData.course_code = data.courseCode;
+      if (data.credits !== undefined) updateData.credits = data.credits;
+      if (data.semester !== undefined) updateData.semester = data.semester;
+      if (data.prerequisites !== undefined) updateData.prerequisites = data.prerequisites;
+      if (data.minimumCGPA !== undefined) updateData.minimum_cgpa = data.minimumCGPA;
+      if (data.summary !== undefined) updateData.summary = data.summary;
+      if (data.specificRequirements !== undefined) updateData.specific_requirements = data.specificRequirements;
+      if (data.status !== undefined) updateData.status = data.status;
+      if (data.eligibleBranches !== undefined) updateData.eligible_branches = data.eligibleBranches;
+      if (data.numberOfOpenings !== undefined) updateData.number_of_openings = data.numberOfOpenings;
+      if (data.lastDateToApply !== undefined) updateData.last_date_to_apply = data.lastDateToApply;
+      
+      const { data: updatedPosition, error } = await supabase
+        .from('research_positions')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+        
+      if (error) throw error;
+      
+      await refreshPositions();
+      
+      const mappedPosition: ResearchPosition = {
+        id: updatedPosition.id,
+        professorId: updatedPosition.professor_id,
+        professorName: updatedPosition.professor_name,
+        researchArea: updatedPosition.research_area,
+        courseCode: updatedPosition.course_code,
+        credits: updatedPosition.credits,
+        semester: updatedPosition.semester,
+        prerequisites: updatedPosition.prerequisites,
+        minimumCGPA: updatedPosition.minimum_cgpa,
+        summary: updatedPosition.summary,
+        specificRequirements: updatedPosition.specific_requirements,
+        createdAt: new Date(updatedPosition.created_at),
+        status: updatedPosition.status as "open" | "closed",
+        department: updatedPosition.department,
+        eligibleBranches: updatedPosition.eligible_branches,
+        numberOfOpenings: updatedPosition.number_of_openings,
+        lastDateToApply: new Date(updatedPosition.last_date_to_apply)
+      };
+      
+      return mappedPosition;
     } catch (err) {
       console.error("Update position failed:", err);
       setError("Failed to update position");
@@ -279,8 +353,14 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setError(null);
     
     try {
-      await mockDataService.updateApplication(applicationId, { status });
-      refreshPositions();
+      const { error } = await supabase
+        .from('applications')
+        .update({ status })
+        .eq('id', applicationId);
+
+      if (error) throw error;
+      
+      await refreshPositions();
     } catch (err) {
       console.error("Update application status failed:", err);
       setError(err instanceof Error ? err.message : "Failed to update application status");
