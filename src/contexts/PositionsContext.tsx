@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { ResearchPosition, Application } from "@/lib/types";
 import { mockDataService } from "@/lib/mock-data";
@@ -15,7 +14,7 @@ interface PositionsContextType {
   deletePosition: (id: string) => Promise<void>;
   getApplicationsForPosition: (positionId: string) => Application[];
   hasApplied: (positionId: string) => boolean;
-  createApplication: (positionId: string, pitch: string) => Promise<void>;
+  createApplication: (positionId: string, pitch: string, resumeLink: string) => Promise<void>;
   updateApplicationStatus: (applicationId: string, status: "pending" | "shortlisted" | "rejected") => Promise<void>;
   myPositions: ResearchPosition[]; // For professors
   myApplications: Application[]; // For students
@@ -46,7 +45,6 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       if (applicationsError) throw applicationsError;
 
-      // Map the data to match our TypeScript types
       const mappedPositions: ResearchPosition[] = positionsData.map(p => ({
         id: p.id,
         professorId: p.professor_id,
@@ -60,7 +58,7 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         summary: p.summary,
         specificRequirements: p.specific_requirements,
         createdAt: new Date(p.created_at),
-        status: p.status as "open" | "closed", // Type assertion to match the expected type
+        status: p.status as "open" | "closed",
         department: p.department,
         eligibleBranches: p.eligible_branches,
         numberOfOpenings: p.number_of_openings,
@@ -80,7 +78,7 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         whatsappNumber: a.whatsapp_number,
         cgpa: a.cgpa,
         pitch: a.pitch,
-        status: a.status as "pending" | "shortlisted" | "rejected", // Type assertion to match the expected type
+        status: a.status as "pending" | "shortlisted" | "rejected",
         createdAt: new Date(a.created_at)
       }));
 
@@ -127,7 +125,7 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
     } catch (err) {
       console.error("Create position failed:", err);
-      setError(err instanceof Error ? err.message : "Failed to create position");
+      setError("Failed to create position");
       throw err;
     } finally {
       setLoading(false);
@@ -156,7 +154,7 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       return undefined;
     } catch (err) {
       console.error("Update position failed:", err);
-      setError(err instanceof Error ? err.message : "Failed to update position");
+      setError("Failed to update position");
       return undefined;
     } finally {
       setLoading(false);
@@ -182,7 +180,7 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       refreshPositions();
     } catch (err) {
       console.error("Delete position failed:", err);
-      setError(err instanceof Error ? err.message : "Failed to delete position");
+      setError("Failed to delete position");
       throw err;
     } finally {
       setLoading(false);
@@ -210,7 +208,7 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return applications.some(a => a.positionId === positionId && a.studentId === user.id);
   };
 
-  const createApplication = async (positionId: string, pitch: string) => {
+  const createApplication = async (positionId: string, pitch: string, resumeLink: string) => {
     if (!user || user.role !== "student") {
       throw new Error("Only students can apply for positions");
     }
@@ -232,21 +230,26 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         throw new Error(`Your CGPA (${user.cgpa}) does not meet the minimum requirement (${position.minimumCGPA})`);
       }
       
-      const applicationData = {
-        positionId,
-        studentId: user.id,
-        fullName: user.fullName,
-        idNumber: user.idNumber,
-        email: user.email,
-        whatsappNumber: user.whatsappNumber,
-        btechBranch: user.btechBranch,
-        dualDegree: user.dualDegree,
-        minorDegree: user.minorDegree,
-        cgpa: user.cgpa,
-        pitch
-      };
+      const { data, error } = await supabase
+        .from('applications')
+        .insert({
+          position_id: positionId,
+          student_id: user.id,
+          full_name: user.fullName,
+          id_number: user.idNumber,
+          email: user.email,
+          whatsapp_number: user.whatsappNumber,
+          btech_branch: user.btechBranch,
+          dual_degree: user.dualDegree,
+          minor_degree: user.minorDegree,
+          cgpa: user.cgpa,
+          pitch,
+          resume_link: resumeLink,
+          status: 'pending'
+        });
+
+      if (error) throw error;
       
-      await mockDataService.createApplication(applicationData);
       refreshPositions();
     } catch (err) {
       console.error("Application creation failed:", err);

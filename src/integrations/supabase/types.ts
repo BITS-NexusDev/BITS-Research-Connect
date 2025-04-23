@@ -22,6 +22,7 @@ export type Database = {
           minor_degree: string | null
           pitch: string
           position_id: string
+          resume_link: string | null
           status: string
           student_id: string
           whatsapp_number: string
@@ -38,6 +39,7 @@ export type Database = {
           minor_degree?: string | null
           pitch: string
           position_id: string
+          resume_link?: string | null
           status: string
           student_id: string
           whatsapp_number: string
@@ -54,6 +56,7 @@ export type Database = {
           minor_degree?: string | null
           pitch?: string
           position_id?: string
+          resume_link?: string | null
           status?: string
           student_id?: string
           whatsapp_number?: string
