@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePositions } from "@/contexts/PositionsContext";
@@ -17,6 +18,17 @@ const semesters = [
   "Academic Year 24-25 Semester-2",
   "Academic Year 25-26 Semester-1",
   "Academic Year 25-26 Semester-2"
+];
+
+const bTechBranches = [
+  'A1 - Chemical',
+  'A2 - Civil',
+  'A3 - Electrical & Electronics',
+  'A4 - Mechanical',
+  'A5 - Computer Science',
+  'A6 - Electronics & Instrumentation',
+  'A7 - Electronics & Communication',
+  'A8 - Manufacturing'
 ];
 
 const CreatePosition = () => {
@@ -33,7 +45,10 @@ const CreatePosition = () => {
     prerequisites: "",
     minimumCGPA: "",
     summary: "",
-    specificRequirements: ""
+    specificRequirements: "",
+    eligibleBranches: [] as string[],
+    numberOfOpenings: "1",
+    lastDateToApply: ""
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -58,7 +73,8 @@ const CreatePosition = () => {
     e.preventDefault();
     
     if (!formData.researchArea || !formData.courseCode || !formData.credits || 
-        !formData.semester || !formData.minimumCGPA || !formData.summary) {
+        !formData.semester || !formData.minimumCGPA || !formData.summary ||
+        !formData.lastDateToApply || formData.eligibleBranches.length === 0) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields.",
@@ -95,6 +111,7 @@ const CreatePosition = () => {
         ...formData,
         credits: parseInt(formData.credits),
         minimumCGPA: cgpa,
+        numberOfOpenings: parseInt(formData.numberOfOpenings),
         department: professorUser.department
       });
       
@@ -238,6 +255,63 @@ const CreatePosition = () => {
                   onChange={handleChange}
                   rows={3}
                 />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="eligibleBranches">Eligible Branches*</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {bTechBranches.map((branch) => (
+                    <div key={branch} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={branch}
+                        checked={formData.eligibleBranches.includes(branch)}
+                        onCheckedChange={(checked) => {
+                          setFormData(prev => ({
+                            ...prev,
+                            eligibleBranches: checked
+                              ? [...prev.eligibleBranches, branch]
+                              : prev.eligibleBranches.filter(b => b !== branch)
+                          }));
+                        }}
+                      />
+                      <label
+                        htmlFor={branch}
+                        className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        {branch}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="numberOfOpenings">Number of Openings*</Label>
+                  <Input
+                    id="numberOfOpenings"
+                    name="numberOfOpenings"
+                    type="number"
+                    min="1"
+                    max="15"
+                    value={formData.numberOfOpenings}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="lastDateToApply">Last Date to Apply*</Label>
+                  <Input
+                    id="lastDateToApply"
+                    name="lastDateToApply"
+                    type="date"
+                    value={formData.lastDateToApply}
+                    onChange={handleChange}
+                    min={new Date().toISOString().split('T')[0]}
+                    required
+                  />
+                </div>
               </div>
               
               <div className="pt-4 flex justify-end space-x-4">

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,16 +34,12 @@ const ResearchPositionCard: React.FC<ResearchPositionCardProps> = ({
   getStatusColor,
   handleStatusUpdate,
   handleDemoStatusUpdate,
-  isDemo = false
 }) => (
-  <Card className={isDemo ? "border-bits-blue border-2" : ""}>
+  <Card>
     <CardHeader>
       <div className="flex flex-col md:flex-row justify-between md:items-center">
         <div>
-          <CardTitle className="text-bits-blue">
-            {position.researchArea}
-            {isDemo && <span className="ml-2 text-sm bg-bits-lightblue text-bits-darkblue px-2 py-1 rounded-md">Demo</span>}
-          </CardTitle>
+          <CardTitle className="text-bits-blue">{position.researchArea}</CardTitle>
           <CardDescription>
             {position.courseCode} • {position.credits} Credits • {position.semester}
           </CardDescription>
@@ -69,34 +64,65 @@ const ResearchPositionCard: React.FC<ResearchPositionCardProps> = ({
         </div>
       </div>
     </CardHeader>
+    
     <CardContent>
       <div className="mb-4">
         <h4 className="font-medium text-gray-700">Summary</h4>
         <p className="text-sm mt-1">{position.summary}</p>
       </div>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div>
-          <p className="text-sm font-medium text-gray-500">Prerequisites</p>
-          <p className="text-sm">{position.prerequisites || "None specified"}</p>
+          <p className="text-sm font-medium text-gray-500">Department</p>
+          <p>{position.department}</p>
         </div>
+        
         <div>
           <p className="text-sm font-medium text-gray-500">Minimum CGPA</p>
-          <p className="text-sm">{position.minimumCGPA}</p>
+          <p>{position.minimumCGPA}</p>
         </div>
+        
         <div>
-          <p className="text-sm font-medium text-gray-500">Date Posted</p>
-          <p className="text-sm">{new Date(position.createdAt).toLocaleDateString()}</p>
+          <p className="text-sm font-medium text-gray-500">Number of Openings</p>
+          <p>{position.numberOfOpenings}</p>
         </div>
+        
         <div>
-          <p className="text-sm font-medium text-gray-500">Status</p>
-          <p className="text-sm">{position.status.toUpperCase()}</p>
+          <p className="text-sm font-medium text-gray-500">Last Date to Apply</p>
+          <p>{new Date(position.lastDateToApply).toLocaleDateString()}</p>
         </div>
       </div>
+      
+      <div className="mt-4">
+        <p className="text-sm font-medium text-gray-500">Eligible Branches</p>
+        <div className="flex flex-wrap gap-2 mt-1">
+          {position.eligibleBranches.map((branch) => (
+            <Badge key={branch} variant="secondary">
+              {branch}
+            </Badge>
+          ))}
+        </div>
+      </div>
+      
+      {position.prerequisites && (
+        <div className="mt-4">
+          <p className="text-sm font-medium text-gray-500">Prerequisites</p>
+          <p className="text-sm">{position.prerequisites}</p>
+        </div>
+      )}
+      
+      {position.specificRequirements && (
+        <div className="mt-4">
+          <p className="text-sm font-medium text-gray-500">Specific Requirements</p>
+          <p className="text-sm">{position.specificRequirements}</p>
+        </div>
+      )}
     </CardContent>
+    
     <CardFooter className="flex flex-wrap gap-4">
       <ApplicationsDialog
         position={position}
-        triggerLabel={`View Applications (${counts.total || applications.length})`}
+        triggerLabel={`View Applications (${counts.total})`}
         applications={applications}
         selectedPositionId={selectedPositionId}
         setSelectedPositionId={setSelectedPositionId}
@@ -104,16 +130,6 @@ const ResearchPositionCard: React.FC<ResearchPositionCardProps> = ({
         handleStatusUpdate={handleStatusUpdate}
         handleDemoStatusUpdate={handleDemoStatusUpdate}
       />
-      {!isDemo && (
-        <Button variant="outline" className="flex-1" asChild>
-          <Link to={`/edit-position/${position.id}`}>Edit Position</Link>
-        </Button>
-      )}
-      {isDemo && (
-        <Button variant="outline" className="flex-1" asChild>
-          <Link to="/create-position">Create Real Position</Link>
-        </Button>
-      )}
     </CardFooter>
   </Card>
 );

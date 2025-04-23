@@ -1,8 +1,8 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { ResearchPosition, Application } from "@/lib/types";
 import { mockDataService } from "@/lib/mock-data";
 import { useAuth } from "./AuthContext";
+import { supabase } from "@/lib/supabase";
 
 interface PositionsContextType {
   positions: ResearchPosition[];
@@ -30,14 +30,23 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const refreshPositions = () => {
+  const refreshPositions = async () => {
     setLoading(true);
     try {
-      const allPositions = mockDataService.getPositions();
-      setPositions(allPositions);
-      
-      const allApplications = mockDataService.getApplications();
-      setApplications(allApplications);
+      const { data: positionsData, error: positionsError } = await supabase
+        .from('research_positions')
+        .select('*');
+
+      if (positionsError) throw positionsError;
+
+      const { data: applicationsData, error: applicationsError } = await supabase
+        .from('applications')
+        .select('*');
+
+      if (applicationsError) throw applicationsError;
+
+      setPositions(positionsData);
+      setApplications(applicationsData);
     } catch (err) {
       console.error("Error fetching positions:", err);
       setError("Failed to fetch research positions");
@@ -120,16 +129,17 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       throw new Error("Only professors can delete positions");
     }
 
-    const position = positions.find(p => p.id === id);
-    if (!position || position.professorId !== user.id) {
-      throw new Error("You don't have permission to delete this position");
-    }
-
     setLoading(true);
     setError(null);
     
     try {
-      await mockDataService.deletePosition(id);
+      const { error } = await supabase
+        .from('research_positions')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
       refreshPositions();
     } catch (err) {
       console.error("Delete position failed:", err);

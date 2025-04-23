@@ -141,8 +141,11 @@ export type Database = {
           created_at: string
           credits: number
           department: string
+          eligible_branches: string[]
           id: string
+          last_date_to_apply: string
           minimum_cgpa: number
+          number_of_openings: number
           prerequisites: string | null
           professor_id: string
           professor_name: string
@@ -157,8 +160,11 @@ export type Database = {
           created_at?: string
           credits: number
           department: string
+          eligible_branches?: string[]
           id?: string
+          last_date_to_apply: string
           minimum_cgpa: number
+          number_of_openings?: number
           prerequisites?: string | null
           professor_id: string
           professor_name: string
@@ -173,8 +179,11 @@ export type Database = {
           created_at?: string
           credits?: number
           department?: string
+          eligible_branches?: string[]
           id?: string
+          last_date_to_apply?: string
           minimum_cgpa?: number
+          number_of_openings?: number
           prerequisites?: string | null
           professor_id?: string
           professor_name?: string

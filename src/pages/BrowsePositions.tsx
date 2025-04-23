@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,14 +11,11 @@ import { usePositions } from "@/contexts/PositionsContext";
 const BrowsePositions = () => {
   const { positions, loading } = usePositions();
   
-  // Filter state
   const [departmentFilter, setDepartmentFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   
-  // Get all unique departments for filter
   const departments = Array.from(new Set(positions.map(p => p.department)));
   
-  // Filter positions based on department and search query
   const filteredPositions = positions.filter(position => {
     const matchesDepartment = departmentFilter === "all" || position.department === departmentFilter;
     const matchesSearch = position.researchArea.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -31,7 +27,6 @@ const BrowsePositions = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-bits-blue text-white py-4 shadow-md">
         <div className="container mx-auto px-4 flex justify-between items-center">
           <h1 className="text-xl md:text-2xl font-bold">BITS Research Connect</h1>
@@ -55,7 +50,6 @@ const BrowsePositions = () => {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-2xl font-bold text-bits-darkblue mb-6">Browse Research Positions</h2>
@@ -148,6 +142,27 @@ const BrowsePositions = () => {
                         <p className="text-sm font-medium text-gray-500">Minimum CGPA</p>
                         <p>{position.minimumCGPA}</p>
                       </div>
+                      
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Number of Openings</p>
+                        <p>{position.numberOfOpenings}</p>
+                      </div>
+                      
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Last Date to Apply</p>
+                        <p>{new Date(position.lastDateToApply).toLocaleDateString()}</p>
+                      </div>
+                      
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Eligible Branches</p>
+                        <div className="flex flex-wrap gap-1">
+                          {position.eligibleBranches.map(branch => (
+                            <Badge key={branch} variant="secondary" className="text-xs">
+                              {branch}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                     
                     <div className="mb-4">
@@ -194,7 +209,6 @@ const BrowsePositions = () => {
         </div>
       </main>
       
-      {/* Footer */}
       <footer className="bg-bits-darkblue text-white py-6 mt-12">
         <div className="container mx-auto px-4 text-center">
           <p className="text-sm">

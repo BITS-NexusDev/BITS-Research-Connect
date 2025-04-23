@@ -1,4 +1,3 @@
-
 export type UserRole = "student" | "professor";
 
 export interface BaseUser {
@@ -41,7 +40,10 @@ export interface ResearchPosition {
   specificRequirements?: string;
   createdAt: Date;
   status: "open" | "closed";
-  department: string; // Professor's department
+  department: string;
+  eligibleBranches: string[];
+  numberOfOpenings: number;
+  lastDateToApply: Date;
 }
 
 export interface Application {
