@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePositions } from "@/contexts/PositionsContext";
 import { ProfessorProfile } from "@/lib/types";
-import { courseCodeList, courseIDList, semesterList } from "@/lib/constants";
+import { courseCodeList, courseIDList, semesterList, primaryDisciplineList } from "@/lib/constants";
 
 const credits = [1, 2, 3, 4, 5, 6, 9];
 
@@ -94,7 +95,7 @@ const CreatePosition = () => {
       
       await createPosition({
         ...formData,
-        course_code: `${formData.coursePrefix} ${formData.courseNumber}`,
+        courseCode: `${formData.coursePrefix} ${formData.courseNumber}`,
         credits: parseInt(formData.credits),
         minimumCGPA: parseFloat(formData.minimumCGPA),
         numberOfOpenings: parseInt(formData.numberOfOpenings),
@@ -271,7 +272,7 @@ const CreatePosition = () => {
               <div className="space-y-2">
                 <Label htmlFor="eligibleBranches">Eligible Branches*</Label>
                 <div className="grid grid-cols-2 gap-2">
-                  {bTechBranches.map((branch) => (
+                  {primaryDisciplineList.map((branch) => (
                     <div key={branch} className="flex items-center space-x-2">
                       <Checkbox
                         id={branch}
