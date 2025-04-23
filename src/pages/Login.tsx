@@ -32,17 +32,21 @@ const Login = () => {
       setIsSubmitting(true);
       await login(email, password);
       
-      // The authContext will update the user state if login is successful
-      // We can check if there was an error
-      if (!error) {
+      // Get the updated user after login to determine the proper redirect
+      const { user } = useAuth();
+      
+      if (user) {
         toast({
           title: "Login Successful",
           description: "Welcome back to BITS Research Connect!",
         });
         
         // Redirect to the appropriate dashboard based on role
-        // This will be handled in useEffect in App.tsx
-        navigate("/");
+        if (user.role === "student") {
+          navigate("/student-dashboard");
+        } else {
+          navigate("/professor-dashboard");
+        }
       }
     } catch (err) {
       toast({

@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User, UserRole, StudentProfile, ProfessorProfile } from "@/lib/types";
 import { mockDataService } from "@/lib/mock-data";
@@ -21,7 +20,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check if user is already logged in
     const checkAuth = async () => {
       try {
         const currentUser = mockDataService.getCurrentUser();
@@ -43,22 +41,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const response = await mockDataService.login(email, password);
       if (response.success) {
-        // Ensure user has required fields by asserting its shape
         if (
           response.user && 
           typeof response.user.id === 'string' && 
           response.user.role
         ) {
           setUser(response.user as User);
+          return;
         } else {
           throw new Error("Invalid user data received");
         }
       } else {
         setError(response.error || "Login failed");
+        throw new Error(response.error || "Login failed");
       }
     } catch (err) {
       console.error("Login failed:", err);
       setError(err instanceof Error ? err.message : "Login failed");
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -70,7 +70,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const response = await mockDataService.register(userData);
       if (response.success) {
-        // Ensure user has required fields
         if (
           response.user && 
           typeof response.user.id === 'string' && 
@@ -108,15 +107,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       let response;
       if (user.role === "student") {
-        // Cast the generic data to a more specific type 
-        // that matches what the function expects
         response = await mockDataService.updateStudentProfile(
           user.id, 
           data as Partial<StudentProfile>
         );
       } else {
-        // Cast the generic data to a more specific type
-        // that matches what the function expects
         response = await mockDataService.updateProfessorProfile(
           user.id, 
           data as Partial<ProfessorProfile>
