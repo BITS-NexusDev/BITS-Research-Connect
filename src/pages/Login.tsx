@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -30,28 +31,46 @@ const Login = () => {
     
     try {
       setIsSubmitting(true);
-      await login(email, password);
       
-      // Get the updated user after login to determine the proper redirect
-      const { user } = useAuth();
+      // Try to log in with Supabase directly
+      const { data, error: supabaseError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
       
-      if (user) {
+      if (supabaseError) {
+        throw new Error(supabaseError.message);
+      }
+
+      if (data.user) {
         toast({
           title: "Login Successful",
           description: "Welcome back to BITS Research Connect!",
         });
         
-        // Redirect to the appropriate dashboard based on role
-        if (user.role === "student") {
-          navigate("/student-dashboard");
+        // Redirect based on user role in the session
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', data.user.id)
+          .single();
+          
+        if (profileData && profileData.role) {
+          if (profileData.role === "student") {
+            navigate("/student-dashboard");
+          } else {
+            navigate("/professor-dashboard");
+          }
         } else {
-          navigate("/professor-dashboard");
+          // Fallback if we can't determine role
+          navigate("/");
         }
       }
     } catch (err) {
+      console.error("Login failed:", err);
       toast({
         title: "Login Failed",
-        description: error || "Something went wrong. Please try again.",
+        description: err instanceof Error ? err.message : "Invalid credentials. Please try again.",
         variant: "destructive",
       });
     } finally {

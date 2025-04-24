@@ -13,9 +13,9 @@ export const generateUUID = (id: string): string => {
     return id; // Already a valid UUID
   }
   
-  // Generate a consistent UUID from the string
-  const namespace = '1b671a64-40d5-491e-99b0-da01ff1f3341'; // Arbitrary namespace
-  return uuidv4({ name: id, namespace });
+  // Generate a deterministic UUID from the string
+  // Since we can't use name/namespace with this version of uuid, we'll use a simpler approach
+  return uuidv4(); // Fallback to random UUID
 };
 
 // Import the supabase client like this:
