@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { ResearchPosition, Application } from "@/lib/types";
 import { mockDataService } from "@/lib/mock-data";
 import { useAuth } from "./AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, generateUUID } from "@/integrations/supabase/client";
 
 interface PositionsContextType {
   positions: ResearchPosition[];
@@ -128,8 +128,11 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         ? data.lastDateToApply.toISOString().split('T')[0]
         : data.lastDateToApply;
 
+      // Convert the user.id to a valid UUID if it's not already
+      const professorId = generateUUID(user.id);
+      
       const insertData = {
-        professor_id: user.id,
+        professor_id: professorId,
         professor_name: user.fullName,
         research_area: data.researchArea,
         course_code: data.courseCode,
