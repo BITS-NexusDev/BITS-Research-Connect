@@ -1,3 +1,4 @@
+
 export type UserRole = "student" | "professor";
 
 export interface BaseUser {

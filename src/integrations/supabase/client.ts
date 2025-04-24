@@ -32,3 +32,17 @@ export const supabase = createClient<Database>(
 supabase.auth.onAuthStateChange((event, session) => {
   console.log('Supabase Auth Event:', event, session?.user?.id || 'No user');
 });
+
+// Add debug logging for data operations
+const originalFrom = supabase.from;
+supabase.from = function(table) {
+  const builder = originalFrom.call(this, table);
+  
+  const originalInsert = builder.insert;
+  builder.insert = function(values, options) {
+    console.log(`Inserting into ${table}:`, JSON.stringify(values, null, 2));
+    return originalInsert.call(this, values, options);
+  };
+  
+  return builder;
+} as typeof supabase.from;
