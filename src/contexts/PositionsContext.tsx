@@ -121,7 +121,7 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setError(null);
     
     try {
-      console.log("Creating position with data:", data);
+      console.log("Creating position with data:", JSON.stringify(data, null, 2));
       
       // Convert Date object to ISO string for Supabase
       const lastDateToApply = data.lastDateToApply instanceof Date 
@@ -140,13 +140,13 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         summary: data.summary,
         specific_requirements: data.specificRequirements || null,
         status: 'open',
-        department: user.department,
+        department: data.department,
         eligible_branches: data.eligibleBranches,
         number_of_openings: data.numberOfOpenings,
         last_date_to_apply: lastDateToApply
       };
 
-      console.log("Sending data to Supabase:", insertData);
+      console.log("Sending data to Supabase:", JSON.stringify(insertData, null, 2));
 
       const { data: newPosition, error } = await supabase
         .from('research_positions')

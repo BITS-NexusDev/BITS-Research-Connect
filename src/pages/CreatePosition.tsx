@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -89,9 +88,13 @@ const CreatePosition = () => {
     }
 
     const professorUser = user as ProfessorProfile;
+    console.log("Professor user data:", professorUser);
     
     try {
       setIsSubmitting(true);
+      
+      console.log("Form data before submission:", formData);
+      console.log("Creating position with department:", professorUser.department);
       
       await createPosition({
         ...formData,
@@ -99,7 +102,7 @@ const CreatePosition = () => {
         credits: parseInt(formData.credits),
         minimumCGPA: parseFloat(formData.minimumCGPA),
         numberOfOpenings: parseInt(formData.numberOfOpenings),
-        department: (user as ProfessorProfile).department,
+        department: professorUser.department || "",
         lastDateToApply: new Date(formData.lastDateToApply)
       });
       
@@ -110,9 +113,10 @@ const CreatePosition = () => {
       
       navigate("/professor-dashboard");
     } catch (error) {
+      console.error("Error creating position:", error);
       toast({
         title: "Creation Failed",
-        description: "Failed to create research position. Please try again.",
+        description: `Failed to create research position: ${error instanceof Error ? error.message : "Unknown error"}`,
         variant: "destructive"
       });
     } finally {

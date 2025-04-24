@@ -19,7 +19,8 @@ export const supabase = createClient<Database>(
     },
     global: {
       fetch: (url, options) => {
-        const [requestUrl, requestOptions] = [url, options];
+        const requestUrl = url;
+        const requestOptions = options;
         console.log(`Supabase Fetch: ${requestOptions?.method || 'GET'} ${requestUrl}`);
         return fetch(requestUrl, requestOptions);
       }
