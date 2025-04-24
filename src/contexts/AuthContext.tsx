@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { User, UserRole, StudentProfile, ProfessorProfile } from "@/lib/types";
 import { mockDataService } from "@/lib/mock-data";
 import { supabase } from "@/integrations/supabase/client";
+import { generateUUID } from "@/integrations/supabase/client";
 
 interface AuthContextType {
   user: User | null;
@@ -36,30 +37,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             .single();
             
           if (profile) {
+            console.log("Found user profile:", profile);
             // Map the Supabase profile to our User type
-            const mappedUser: User = {
-              id: profile.id,
-              fullName: profile.full_name,
-              idNumber: profile.id_number,
-              email: profile.email,
-              whatsappNumber: profile.whatsapp_number || "",
-              role: profile.role as UserRole,
-              createdAt: new Date(profile.created_at),
-              // Add role-specific fields
-              ...(profile.role === "student" ? {
+            if (profile.role === "student") {
+              const studentUser: StudentProfile = {
+                id: profile.id,
+                fullName: profile.full_name,
+                idNumber: profile.id_number,
+                email: profile.email,
+                whatsappNumber: profile.whatsapp_number || "",
+                role: "student",
+                createdAt: new Date(profile.created_at),
                 cgpa: profile.cgpa || 0,
-                btechBranch: profile.btech_branch,
-                dualDegree: profile.dual_degree,
-                minorDegree: profile.minor_degree,
-              } : {
-                designation: profile.designation,
+                btechBranch: profile.btech_branch || "",
+                dualDegree: profile.dual_degree || "",
+                minorDegree: profile.minor_degree || "",
+              };
+              setUser(studentUser);
+            } else {
+              const professorUser: ProfessorProfile = {
+                id: profile.id,
+                fullName: profile.full_name,
+                idNumber: profile.id_number,
+                email: profile.email,
+                whatsappNumber: profile.whatsapp_number || "",
+                role: "professor",
+                createdAt: new Date(profile.created_at),
+                designation: profile.designation || "Assistant Professor",
                 department: profile.department || "",
                 chamberNumber: profile.chamber_number || "",
-                researchInterests: profile.research_interests,
-              })
-            } as User;
-            
-            setUser(mappedUser);
+                researchInterests: profile.research_interests || "",
+              };
+              setUser(professorUser);
+            }
           } else {
             // Fallback to mock data if no profile found
             const currentUser = mockDataService.getCurrentUser();
@@ -142,30 +152,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             throw new Error(response.error || "Login failed");
           }
         } else if (profile) {
+          console.log("Login successful, found profile:", profile);
           // Map the Supabase profile to our User type
-          const mappedUser: User = {
-            id: profile.id,
-            fullName: profile.full_name,
-            idNumber: profile.id_number,
-            email: profile.email,
-            whatsappNumber: profile.whatsapp_number || "",
-            role: profile.role as UserRole,
-            createdAt: new Date(profile.created_at),
-            // Add role-specific fields
-            ...(profile.role === "student" ? {
+          if (profile.role === "student") {
+            const studentUser: StudentProfile = {
+              id: profile.id,
+              fullName: profile.full_name,
+              idNumber: profile.id_number,
+              email: profile.email,
+              whatsappNumber: profile.whatsapp_number || "",
+              role: "student",
+              createdAt: new Date(profile.created_at),
               cgpa: profile.cgpa || 0,
-              btechBranch: profile.btech_branch,
-              dualDegree: profile.dual_degree,
-              minorDegree: profile.minor_degree,
-            } : {
-              designation: profile.designation,
+              btechBranch: profile.btech_branch || "",
+              dualDegree: profile.dual_degree || "",
+              minorDegree: profile.minor_degree || "",
+            };
+            setUser(studentUser);
+          } else {
+            const professorUser: ProfessorProfile = {
+              id: profile.id,
+              fullName: profile.full_name,
+              idNumber: profile.id_number,
+              email: profile.email,
+              whatsappNumber: profile.whatsapp_number || "",
+              role: "professor",
+              createdAt: new Date(profile.created_at),
+              designation: profile.designation || "Assistant Professor",
               department: profile.department || "",
               chamberNumber: profile.chamber_number || "",
-              researchInterests: profile.research_interests,
-            })
-          } as User;
-          
-          setUser(mappedUser);
+              researchInterests: profile.research_interests || "",
+            };
+            setUser(professorUser);
+          }
           return;
         }
       } else {
@@ -263,32 +282,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
     
     try {
+      console.log("Updating profile with data:", data);
       // Try to update profile in Supabase
-      const updateData: any = {
-        full_name: data.fullName,
-        id_number: data.idNumber,
-        email: data.email,
-        whatsapp_number: data.whatsappNumber,
-      };
+      const updateData: any = {};
+      
+      // Add base user fields
+      if (data.fullName) updateData.full_name = data.fullName;
+      if (data.idNumber) updateData.id_number = data.idNumber;
+      if (data.email) updateData.email = data.email;
+      if (data.whatsappNumber) updateData.whatsapp_number = data.whatsappNumber;
       
       // Add role-specific fields
       if (user.role === "student") {
-        updateData.cgpa = (data as Partial<StudentProfile>).cgpa;
-        updateData.btech_branch = (data as Partial<StudentProfile>).btechBranch;
-        updateData.dual_degree = (data as Partial<StudentProfile>).dualDegree;
-        updateData.minor_degree = (data as Partial<StudentProfile>).minorDegree;
+        if ((data as Partial<StudentProfile>).cgpa !== undefined) 
+          updateData.cgpa = (data as Partial<StudentProfile>).cgpa;
+        if ((data as Partial<StudentProfile>).btechBranch !== undefined) 
+          updateData.btech_branch = (data as Partial<StudentProfile>).btechBranch;
+        if ((data as Partial<StudentProfile>).dualDegree !== undefined) 
+          updateData.dual_degree = (data as Partial<StudentProfile>).dualDegree;
+        if ((data as Partial<StudentProfile>).minorDegree !== undefined) 
+          updateData.minor_degree = (data as Partial<StudentProfile>).minorDegree;
       } else {
-        updateData.designation = (data as Partial<ProfessorProfile>).designation;
-        updateData.department = (data as Partial<ProfessorProfile>).department;
-        updateData.chamber_number = (data as Partial<ProfessorProfile>).chamberNumber;
-        updateData.research_interests = (data as Partial<ProfessorProfile>).researchInterests;
+        if ((data as Partial<ProfessorProfile>).designation !== undefined) 
+          updateData.designation = (data as Partial<ProfessorProfile>).designation;
+        if ((data as Partial<ProfessorProfile>).department !== undefined) 
+          updateData.department = (data as Partial<ProfessorProfile>).department;
+        if ((data as Partial<ProfessorProfile>).chamberNumber !== undefined) 
+          updateData.chamber_number = (data as Partial<ProfessorProfile>).chamberNumber;
+        if ((data as Partial<ProfessorProfile>).researchInterests !== undefined) 
+          updateData.research_interests = (data as Partial<ProfessorProfile>).researchInterests;
       }
+      
+      console.log("Prepared Supabase update data:", updateData);
+      console.log("Updating profile for user ID:", user.id);
+      
+      // Format the user ID as a UUID
+      const formattedUserId = generateUUID(user.id);
       
       // Update in Supabase
       const { error: supabaseError } = await supabase
         .from('profiles')
         .update(updateData)
-        .eq('id', user.id);
+        .eq('id', formattedUserId);
         
       if (supabaseError) {
         console.error("Supabase update error:", supabaseError);
@@ -308,26 +343,57 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         
         if (response.success) {
-          setUser(response.profile);
+          setUser(response.profile as User);
         } else {
           setError(response.error || "Profile update failed");
         }
       } else {
+        console.log("Supabase update successful, retrieving updated profile");
         // Update succeeded, get the updated profile
         const { data: updatedProfile } = await supabase
           .from('profiles')
           .select('*')
-          .eq('id', user.id)
+          .eq('id', formattedUserId)
           .single();
           
         if (updatedProfile) {
-          // Map the Supabase profile to our User type
-          const mappedUser: User = {
+          console.log("Retrieved updated profile:", updatedProfile);
+          // Update local user state with merged data
+          if (user.role === "student") {
+            const updatedStudentUser: StudentProfile = {
+              ...user as StudentProfile,
+              fullName: updatedProfile.full_name || user.fullName,
+              idNumber: updatedProfile.id_number || user.idNumber,
+              email: updatedProfile.email || user.email,
+              whatsappNumber: updatedProfile.whatsapp_number || user.whatsappNumber,
+              cgpa: updatedProfile.cgpa || (user as StudentProfile).cgpa || 0,
+              btechBranch: updatedProfile.btech_branch || (user as StudentProfile).btechBranch || "",
+              dualDegree: updatedProfile.dual_degree || (user as StudentProfile).dualDegree || "",
+              minorDegree: updatedProfile.minor_degree || (user as StudentProfile).minorDegree || "",
+            };
+            setUser(updatedStudentUser);
+          } else {
+            const updatedProfessorUser: ProfessorProfile = {
+              ...user as ProfessorProfile,
+              fullName: updatedProfile.full_name || user.fullName,
+              idNumber: updatedProfile.id_number || user.idNumber,
+              email: updatedProfile.email || user.email,
+              whatsappNumber: updatedProfile.whatsapp_number || user.whatsappNumber,
+              designation: updatedProfile.designation || (user as ProfessorProfile).designation || "Assistant Professor",
+              department: updatedProfile.department || (user as ProfessorProfile).department || "",
+              chamberNumber: updatedProfile.chamber_number || (user as ProfessorProfile).chamberNumber || "",
+              researchInterests: updatedProfile.research_interests || (user as ProfessorProfile).researchInterests || "",
+            };
+            setUser(updatedProfessorUser);
+          }
+        } else {
+          console.log("Could not retrieve updated profile, updating user state with provided data");
+          // If we can't get the updated profile, just update with the provided data
+          const updatedUser = {
             ...user,
             ...data,
           };
-          
-          setUser(mappedUser);
+          setUser(updatedUser as User);
         }
       }
     } catch (err) {

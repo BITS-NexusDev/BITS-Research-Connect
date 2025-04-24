@@ -3,19 +3,37 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 import { v4 as uuidv4 } from 'uuid';
+import { validate as validateUUID } from 'uuid';
 
 const SUPABASE_URL = "https://mpwpxgvuztobujadrgty.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1wd3B4Z3Z1enRvYnVqYWRyZ3R5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUyMzYzOTcsImV4cCI6MjA2MDgxMjM5N30.wTmkxPjrnKDkFMDZ9s1o4uU_VgiAlExP0ySAYkp13qA";
 
 // Helper function to generate UUID from string if needed
 export const generateUUID = (id: string): string => {
-  if (id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-    return id; // Already a valid UUID
+  // Check if it's already a valid UUID
+  if (validateUUID(id)) {
+    console.log(`ID ${id} is already a valid UUID`);
+    return id;
   }
   
-  // Generate a deterministic UUID from the string
-  // Since we can't use name/namespace with this version of uuid, we'll use a simpler approach
-  return uuidv4(); // Fallback to random UUID
+  console.log(`Converting non-UUID id ${id} to a valid UUID`);
+  
+  // For consistent UUIDs (for the same input string)
+  // we'll use a deterministic approach based on the string
+  const namespace = '1b671a64-40d5-491e-99b0-da01ff1f3341'; // Arbitrary namespace
+  
+  // Generate a UUID using v5 if available, otherwise fallback to random v4
+  try {
+    const { v5 } = require('uuid');
+    if (typeof v5 === 'function') {
+      return v5(id, namespace);
+    }
+  } catch (e) {
+    console.warn('UUID v5 not available, using random UUID');
+  }
+  
+  // Fallback to random UUID
+  return uuidv4();
 };
 
 // Import the supabase client like this:
@@ -34,6 +52,17 @@ export const supabase = createClient<Database>(
         const requestUrl = url;
         const requestOptions = options;
         console.log(`Supabase Fetch: ${requestOptions?.method || 'GET'} ${requestUrl}`);
+        
+        // Log request bodies for debugging
+        if (requestOptions?.body) {
+          try {
+            const body = JSON.parse(requestOptions.body.toString());
+            console.log('Request body:', body);
+          } catch (e) {
+            // Not JSON or couldn't parse
+          }
+        }
+        
         return fetch(requestUrl, requestOptions);
       }
     }
@@ -50,10 +79,25 @@ const originalFrom = supabase.from;
 supabase.from = function(table) {
   const builder = originalFrom.call(this, table);
   
+  // Enhance insert operations with logging
   const originalInsert = builder.insert;
   builder.insert = function(values, options) {
     console.log(`Inserting into ${table}:`, JSON.stringify(values, null, 2));
     return originalInsert.call(this, values, options);
+  };
+  
+  // Enhance update operations with logging
+  const originalUpdate = builder.update;
+  builder.update = function(values, options) {
+    console.log(`Updating in ${table}:`, JSON.stringify(values, null, 2));
+    return originalUpdate.call(this, values, options);
+  };
+  
+  // Enhance select operations with logging
+  const originalSelect = builder.select;
+  builder.select = function(columns) {
+    console.log(`Selecting from ${table}${columns ? `: ${columns}` : ''}`);
+    return originalSelect.call(this, columns);
   };
   
   return builder;

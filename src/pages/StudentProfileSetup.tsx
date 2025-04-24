@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,6 +32,7 @@ const StudentProfileSetup = () => {
     }
     
     if (user && user.role === "student") {
+      console.log("Pre-filling student form with data:", user);
       setFormData({
         btechBranch: user.btechBranch || "",
         dualDegree: user.dualDegree || "",
@@ -47,6 +49,7 @@ const StudentProfileSetup = () => {
   };
 
   const handleSelectChange = (name: string, value: string) => {
+    console.log(`Changing ${name} to ${value}`);
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -75,6 +78,11 @@ const StudentProfileSetup = () => {
     try {
       setIsSubmitting(true);
       
+      console.log("Submitting student profile data:", {
+        ...formData,
+        cgpa
+      });
+      
       await updateProfile({
         ...formData,
         cgpa
@@ -87,6 +95,7 @@ const StudentProfileSetup = () => {
       
       navigate("/student-dashboard");
     } catch (error) {
+      console.error("Profile update error:", error);
       toast({
         title: "Update Failed",
         description: "Failed to update profile. Please try again.",

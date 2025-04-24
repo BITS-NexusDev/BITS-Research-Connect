@@ -35,6 +35,7 @@ const StudentProfile = () => {
     
     // Pre-fill form with existing data
     if (user && user.role === "student") {
+      console.log("Loading student data into form:", user);
       setFormData({
         fullName: user.fullName || "",
         idNumber: user.idNumber || "",
@@ -80,6 +81,11 @@ const StudentProfile = () => {
     try {
       setIsSubmitting(true);
       
+      console.log("Submitting student profile update with data:", {
+        ...formData,
+        cgpa
+      });
+      
       await updateProfile({
         ...formData,
         cgpa
@@ -93,6 +99,7 @@ const StudentProfile = () => {
       // Redirect back to dashboard
       navigate("/student-dashboard");
     } catch (error) {
+      console.error("Profile update error:", error);
       toast({
         title: "Update Failed",
         description: "Failed to update profile. Please try again.",
