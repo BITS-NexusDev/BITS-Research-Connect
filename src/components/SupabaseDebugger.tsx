@@ -19,10 +19,10 @@ export const SupabaseDebugger = () => {
   const [tables, setTables] = useState<TableInfo[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  // Define tableNames with the correct type
+  // Define tableNames with the correct type, removing 'users' which doesn't exist
   const [tableNames] = useState<ValidTableName[]>([
-    'users', 'user_roles', 'students', 'professors', 'research_positions', 'applications'
-  ] as ValidTableName[]);
+    'user_roles', 'students', 'professors', 'research_positions', 'applications'
+  ]);
 
   useEffect(() => {
     // Get current user
