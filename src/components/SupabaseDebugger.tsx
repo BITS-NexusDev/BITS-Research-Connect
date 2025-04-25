@@ -11,12 +11,18 @@ interface TableInfo {
   error?: string;
 }
 
+// Define a type for valid table names
+type ValidTableName = "applications" | "research_positions" | "students" | "professors" | "user_roles";
+
 export const SupabaseDebugger = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [tables, setTables] = useState<TableInfo[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [tableNames] = useState(['users', 'user_roles', 'students', 'professors', 'research_positions', 'applications']);
+  // Define tableNames with the correct type
+  const [tableNames] = useState<ValidTableName[]>([
+    'users', 'user_roles', 'students', 'professors', 'research_positions', 'applications'
+  ] as ValidTableName[]);
 
   useEffect(() => {
     // Get current user
@@ -33,7 +39,7 @@ export const SupabaseDebugger = () => {
     
     for (const table of tableNames) {
       try {
-        // Count records
+        // Count records - now table is properly typed
         const { count, error } = await supabase
           .from(table)
           .select('*', { count: 'exact', head: true });
