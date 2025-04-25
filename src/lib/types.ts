@@ -47,6 +47,33 @@ export interface ResearchPosition {
   lastDateToApply: Date;
 }
 
+// Database equivalent types that match the Supabase schema
+export interface DbResearchPosition {
+  id: string;
+  professor_id: string;
+  title: string;
+  description: string;
+  requirements?: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  deadline?: string;
+  number_of_openings?: number;
+  duration_months?: number;
+  stipend_amount?: number;
+  department?: string;
+}
+
+export interface DbApplication {
+  id: string;
+  student_id: string;
+  position_id: string;
+  status: string;
+  created_at: string;
+  updated_at?: string;
+  cover_letter?: string;
+}
+
 export interface Application {
   id: string;
   positionId: string;

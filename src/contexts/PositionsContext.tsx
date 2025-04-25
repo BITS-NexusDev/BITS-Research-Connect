@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { ResearchPosition, Application } from "@/lib/types";
+import { ResearchPosition, Application, DbResearchPosition, DbApplication } from "@/lib/types";
 import { mockDataService } from "@/lib/mock-data";
 import { useAuth } from "./AuthContext";
 import { supabase, generateUUID } from "@/integrations/supabase/client";
@@ -30,6 +30,53 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  const mapDbPositionToAppPosition = (dbPosition: DbResearchPosition, professorName?: string): ResearchPosition => {
+    return {
+      id: dbPosition.id,
+      professorId: dbPosition.professor_id,
+      professorName: professorName || "Unknown Professor",
+      researchArea: dbPosition.title,
+      courseCode: dbPosition.description.split(' • ')[0] || dbPosition.description,
+      credits: dbPosition.duration_months || 3,
+      semester: "Current",
+      prerequisites: dbPosition.requirements || undefined,
+      minimumCGPA: parseFloat(dbPosition.requirements?.match(/CGPA: (\d+\.\d+)/)?.[1] || "7.5"),
+      summary: dbPosition.description,
+      specificRequirements: dbPosition.requirements,
+      createdAt: new Date(dbPosition.created_at),
+      status: dbPosition.status as "open" | "closed",
+      department: dbPosition.department || "General",
+      eligibleBranches: dbPosition.requirements?.split(',').map(s => s.trim()) || ["All Branches"],
+      numberOfOpenings: dbPosition.number_of_openings || 1,
+      lastDateToApply: new Date(dbPosition.deadline || Date.now() + 30 * 24 * 60 * 60 * 1000)
+    };
+  };
+
+  const mapDbApplicationToAppApplication = async (dbApp: DbApplication): Promise<Application> => {
+    const { data: studentData } = await supabase
+      .from('students')
+      .select('*')
+      .eq('id', dbApp.student_id)
+      .single();
+      
+    return {
+      id: dbApp.id,
+      positionId: dbApp.position_id,
+      studentId: dbApp.student_id,
+      fullName: studentData?.full_name || "Unknown Student",
+      idNumber: studentData?.id_number || "",
+      email: studentData?.email || "",
+      btechBranch: studentData?.btech_branch || undefined,
+      dualDegree: studentData?.dual_degree || undefined,
+      minorDegree: studentData?.minor_degree || undefined,
+      whatsappNumber: studentData?.whatsapp_number || "",
+      cgpa: studentData?.cgpa || 0,
+      pitch: dbApp.cover_letter || "",
+      status: dbApp.status as "pending" | "shortlisted" | "rejected",
+      createdAt: new Date(dbApp.created_at)
+    };
+  };
+
   const refreshPositions = async () => {
     setLoading(true);
     try {
@@ -56,42 +103,26 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       console.log("Applications data received:", applicationsData);
 
-      const mappedPositions: ResearchPosition[] = positionsData.map(p => ({
-        id: p.id,
-        professorId: p.professor_id,
-        professorName: p.professor_name,
-        researchArea: p.research_area,
-        courseCode: p.course_code,
-        credits: p.credits,
-        semester: p.semester,
-        prerequisites: p.prerequisites,
-        minimumCGPA: p.minimum_cgpa,
-        summary: p.summary,
-        specificRequirements: p.specific_requirements,
-        createdAt: new Date(p.created_at),
-        status: p.status as "open" | "closed",
-        department: p.department,
-        eligibleBranches: p.eligible_branches,
-        numberOfOpenings: p.number_of_openings,
-        lastDateToApply: new Date(p.last_date_to_apply)
-      }));
+      const professorIds = [...new Set(positionsData.map(p => p.professor_id))];
+      const professorNamesMap: Record<string, string> = {};
+      
+      for (const profId of professorIds) {
+        const { data: profData } = await supabase
+          .from('professors')
+          .select('full_name')
+          .eq('id', profId)
+          .single();
+          
+        if (profData) {
+          professorNamesMap[profId] = profData.full_name;
+        }
+      }
 
-      const mappedApplications: Application[] = applicationsData.map(a => ({
-        id: a.id,
-        positionId: a.position_id,
-        studentId: a.student_id,
-        fullName: a.full_name,
-        idNumber: a.id_number,
-        email: a.email,
-        btechBranch: a.btech_branch,
-        dualDegree: a.dual_degree,
-        minorDegree: a.minor_degree,
-        whatsappNumber: a.whatsapp_number,
-        cgpa: a.cgpa,
-        pitch: a.pitch,
-        status: a.status as "pending" | "shortlisted" | "rejected",
-        createdAt: new Date(a.created_at)
-      }));
+      const mappedPositions: ResearchPosition[] = positionsData.map(p => 
+        mapDbPositionToAppPosition(p, professorNamesMap[p.professor_id]));
+
+      const mappedApplicationsPromises = applicationsData.map(mapDbApplicationToAppApplication);
+      const mappedApplications = await Promise.all(mappedApplicationsPromises);
 
       setPositions(mappedPositions);
       setApplications(mappedApplications);
@@ -123,30 +154,22 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     try {
       console.log("Creating position with data:", JSON.stringify(data, null, 2));
       
-      // Convert Date object to ISO string for Supabase
-      const lastDateToApply = data.lastDateToApply instanceof Date 
+      const deadline = data.lastDateToApply instanceof Date 
         ? data.lastDateToApply.toISOString().split('T')[0]
         : data.lastDateToApply;
 
-      // Convert the user.id to a valid UUID if it's not already
       const professorId = generateUUID(user.id);
       
       const insertData = {
         professor_id: professorId,
-        professor_name: user.fullName,
-        research_area: data.researchArea,
-        course_code: data.courseCode,
-        credits: data.credits,
-        semester: data.semester,
-        prerequisites: data.prerequisites || null,
-        minimum_cgpa: data.minimumCGPA,
-        summary: data.summary,
-        specific_requirements: data.specificRequirements || null,
+        title: data.researchArea,
+        description: `${data.courseCode} • ${data.credits} credits • ${data.summary}`,
+        requirements: `Minimum CGPA: ${data.minimumCGPA}, ${data.prerequisites || ''} ${data.specificRequirements || ''}`,
         status: 'open',
         department: data.department,
-        eligible_branches: data.eligibleBranches,
         number_of_openings: data.numberOfOpenings,
-        last_date_to_apply: lastDateToApply
+        deadline: deadline,
+        duration_months: data.credits
       };
 
       console.log("Sending data to Supabase:", JSON.stringify(insertData, null, 2));
@@ -165,27 +188,12 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       console.log("Position created successfully:", newPosition);
       await refreshPositions();
       
-      const mappedPosition: ResearchPosition = {
-        id: newPosition.id,
-        professorId: newPosition.professor_id,
-        professorName: newPosition.professor_name,
-        researchArea: newPosition.research_area,
-        courseCode: newPosition.course_code,
-        credits: newPosition.credits,
-        semester: newPosition.semester,
-        prerequisites: newPosition.prerequisites,
-        minimumCGPA: newPosition.minimum_cgpa,
-        summary: newPosition.summary,
-        specificRequirements: newPosition.specific_requirements,
-        createdAt: new Date(newPosition.created_at),
-        status: newPosition.status as "open" | "closed",
-        department: newPosition.department,
-        eligibleBranches: newPosition.eligible_branches,
-        numberOfOpenings: newPosition.number_of_openings,
-        lastDateToApply: new Date(newPosition.last_date_to_apply)
-      };
+      const createdPosition = positions.find(p => p.id === newPosition.id);
+      if (!createdPosition) {
+        throw new Error("Failed to retrieve created position");
+      }
       
-      return mappedPosition;
+      return createdPosition;
     } catch (err) {
       console.error("Create position failed:", err);
       setError("Failed to create position");
@@ -210,64 +218,45 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     
     try {
       console.log("Updating position:", id, "with data:", data);
+      
       const updateData: any = {};
       
-      if (data.researchArea !== undefined) updateData.research_area = data.researchArea;
-      if (data.courseCode !== undefined) updateData.course_code = data.courseCode;
-      if (data.credits !== undefined) updateData.credits = data.credits;
-      if (data.semester !== undefined) updateData.semester = data.semester;
-      if (data.prerequisites !== undefined) updateData.prerequisites = data.prerequisites;
-      if (data.minimumCGPA !== undefined) updateData.minimum_cgpa = data.minimumCGPA;
-      if (data.summary !== undefined) updateData.summary = data.summary;
-      if (data.specificRequirements !== undefined) updateData.specific_requirements = data.specificRequirements;
+      if (data.researchArea !== undefined) updateData.title = data.researchArea;
+      if (data.summary !== undefined || data.courseCode !== undefined || data.credits !== undefined) {
+        const currentPosition = positions.find(p => p.id === id);
+        updateData.description = `${data.courseCode || currentPosition?.courseCode} • ${data.credits || currentPosition?.credits} credits • ${data.summary || currentPosition?.summary}`;
+      }
+      if (data.prerequisites !== undefined || data.specificRequirements !== undefined || data.minimumCGPA !== undefined) {
+        const currentPosition = positions.find(p => p.id === id);
+        updateData.requirements = `Minimum CGPA: ${data.minimumCGPA || currentPosition?.minimumCGPA}, ${data.prerequisites || currentPosition?.prerequisites || ''} ${data.specificRequirements || currentPosition?.specificRequirements || ''}`;
+      }
       if (data.status !== undefined) updateData.status = data.status;
-      if (data.eligibleBranches !== undefined) updateData.eligible_branches = data.eligibleBranches;
       if (data.numberOfOpenings !== undefined) updateData.number_of_openings = data.numberOfOpenings;
       if (data.lastDateToApply !== undefined) {
-        // Convert Date object to ISO string for Supabase
-        updateData.last_date_to_apply = data.lastDateToApply instanceof Date 
+        updateData.deadline = data.lastDateToApply instanceof Date 
           ? data.lastDateToApply.toISOString().split('T')[0] 
           : data.lastDateToApply;
       }
+      if (data.department !== undefined) updateData.department = data.department;
+      if (data.credits !== undefined) updateData.duration_months = data.credits;
       
       console.log("Sending update data to Supabase:", updateData);
       
-      const { data: updatedPosition, error } = await supabase
+      const { error } = await supabase
         .from('research_positions')
         .update(updateData)
-        .eq('id', id)
-        .select()
-        .single();
+        .eq('id', id);
         
       if (error) {
         console.error("Error updating position:", error);
         throw error;
       }
       
-      console.log("Position updated successfully:", updatedPosition);
+      console.log("Position updated successfully");
       await refreshPositions();
       
-      const mappedPosition: ResearchPosition = {
-        id: updatedPosition.id,
-        professorId: updatedPosition.professor_id,
-        professorName: updatedPosition.professor_name,
-        researchArea: updatedPosition.research_area,
-        courseCode: updatedPosition.course_code,
-        credits: updatedPosition.credits,
-        semester: updatedPosition.semester,
-        prerequisites: updatedPosition.prerequisites,
-        minimumCGPA: updatedPosition.minimum_cgpa,
-        summary: updatedPosition.summary,
-        specificRequirements: updatedPosition.specific_requirements,
-        createdAt: new Date(updatedPosition.created_at),
-        status: updatedPosition.status as "open" | "closed",
-        department: updatedPosition.department,
-        eligibleBranches: updatedPosition.eligible_branches,
-        numberOfOpenings: updatedPosition.number_of_openings,
-        lastDateToApply: new Date(updatedPosition.last_date_to_apply)
-      };
-      
-      return mappedPosition;
+      const updatedPosition = positions.find(p => p.id === id);
+      return updatedPosition;
     } catch (err) {
       console.error("Update position failed:", err);
       setError("Failed to update position");
@@ -355,16 +344,7 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const applicationData = {
         position_id: positionId,
         student_id: user.id,
-        full_name: user.fullName,
-        id_number: user.idNumber,
-        email: user.email,
-        whatsapp_number: user.whatsappNumber,
-        btech_branch: user.btechBranch,
-        dual_degree: user.dualDegree,
-        minor_degree: user.minorDegree,
-        cgpa: user.cgpa,
-        pitch,
-        resume_link: resumeLink,
+        cover_letter: pitch,
         status: 'pending'
       };
       
