@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,10 +34,9 @@ const StudentProfile = () => {
     }
     
     // Pre-fill form with existing data
-    if (user && user.role === "student") {
-      // Type assertion to access student-specific properties safely
+    if (user?.role === "student") {
       const studentUser = user as StudentProfileType;
-      console.log("Loading student data into form:", user);
+      console.log("Loading student data into form:", studentUser);
       setFormData({
         fullName: studentUser.fullName || "",
         idNumber: studentUser.idNumber || "",
@@ -92,7 +90,7 @@ const StudentProfile = () => {
       if (formData.dualDegree !== user?.dualDegree) updateData.dualDegree = formData.dualDegree;
       if (formData.minorDegree !== user?.minorDegree) updateData.minorDegree = formData.minorDegree;
       if (formData.whatsappNumber !== user?.whatsappNumber) updateData.whatsappNumber = formData.whatsappNumber;
-      if (cgpa !== user?.cgpa) updateData.cgpa = cgpa;
+      if (cgpa !== (user as StudentProfileType)?.cgpa) updateData.cgpa = cgpa;
       
       console.log("Submitting student profile update with data:", updateData);
       

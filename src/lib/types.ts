@@ -1,4 +1,3 @@
-
 export type UserRole = "student" | "professor";
 
 export interface BaseUser {
@@ -13,7 +12,7 @@ export interface BaseUser {
 
 export interface StudentProfile extends BaseUser {
   role: "student";
-  btechBranch?: string;
+  btechBranch: string;
   dualDegree?: string;
   minorDegree?: string;
   cgpa: number;
@@ -24,7 +23,7 @@ export interface ProfessorProfile extends BaseUser {
   designation: "Professor" | "Senior Professor" | "Associate Professor" | "Assistant Professor" | "Junior Professor";
   department: string;
   chamberNumber: string;
-  researchInterests?: string;
+  researchInterests?: string[];
 }
 
 export interface ResearchPosition {
@@ -47,7 +46,6 @@ export interface ResearchPosition {
   lastDateToApply: Date;
 }
 
-// Database equivalent types that match the Supabase schema
 export interface DbResearchPosition {
   id: string;
   professor_id: string;

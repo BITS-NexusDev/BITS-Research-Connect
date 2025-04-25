@@ -11,7 +11,6 @@ export type Database = {
     Tables: {
       applications: {
         Row: {
-          cover_letter: string | null
           created_at: string | null
           id: string
           position_id: string
@@ -20,7 +19,6 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          cover_letter?: string | null
           created_at?: string | null
           id?: string
           position_id: string
@@ -29,7 +27,6 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          cover_letter?: string | null
           created_at?: string | null
           id?: string
           position_id?: string
