@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User, UserRole, StudentProfile, ProfessorProfile } from "@/lib/types";
 import { mockDataService } from "@/lib/mock-data";
@@ -82,7 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   designation: professorProfile.designation || "Assistant Professor",
                   department: professorProfile.department || "",
                   chamberNumber: professorProfile.chamber_number || "",
-                  researchInterests: professorProfile.research_interests?.[0] || "",
+                  researchInterests: professorProfile.research_interests || [],
                 };
                 setUser(professorUser);
               }
@@ -214,7 +213,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 designation: professorProfile.designation || "Assistant Professor",
                 department: professorProfile.department || "",
                 chamberNumber: professorProfile.chamber_number || "",
-                researchInterests: professorProfile.research_interests?.[0] || "",
+                researchInterests: professorProfile.research_interests || [],
               };
               setUser(professorUser);
             }
@@ -406,7 +405,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if ((data as Partial<ProfessorProfile>).chamberNumber !== undefined) 
           updateData.chamber_number = (data as Partial<ProfessorProfile>).chamberNumber;
         if ((data as Partial<ProfessorProfile>).researchInterests !== undefined) 
-          updateData.research_interests = [(data as Partial<ProfessorProfile>).researchInterests];
+          updateData.research_interests = (data as Partial<ProfessorProfile>).researchInterests;
         
         console.log("Prepared professor update data:", updateData);
         
@@ -450,7 +449,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               designation: updatedProfile.designation || (user as ProfessorProfile).designation || "Assistant Professor",
               department: updatedProfile.department || (user as ProfessorProfile).department || "",
               chamberNumber: updatedProfile.chamber_number || (user as ProfessorProfile).chamberNumber || "",
-              researchInterests: updatedProfile.research_interests?.[0] || (user as ProfessorProfile).researchInterests || "",
+              researchInterests: updatedProfile.research_interests || [],
             };
             setUser(updatedProfessorUser);
           }

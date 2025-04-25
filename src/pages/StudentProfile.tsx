@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -86,11 +87,14 @@ const StudentProfile = () => {
       const updateData: any = {};
       
       // Only include fields that have values and are different from the current user data
-      if (formData.btechBranch !== user?.btechBranch) updateData.btechBranch = formData.btechBranch;
-      if (formData.dualDegree !== user?.dualDegree) updateData.dualDegree = formData.dualDegree;
-      if (formData.minorDegree !== user?.minorDegree) updateData.minorDegree = formData.minorDegree;
-      if (formData.whatsappNumber !== user?.whatsappNumber) updateData.whatsappNumber = formData.whatsappNumber;
-      if (cgpa !== (user as StudentProfileType)?.cgpa) updateData.cgpa = cgpa;
+      if (user?.role === "student") {
+        const studentUser = user as StudentProfileType;
+        if (formData.btechBranch !== studentUser.btechBranch) updateData.btechBranch = formData.btechBranch;
+        if (formData.dualDegree !== studentUser.dualDegree) updateData.dualDegree = formData.dualDegree;
+        if (formData.minorDegree !== studentUser.minorDegree) updateData.minorDegree = formData.minorDegree;
+        if (formData.whatsappNumber !== studentUser.whatsappNumber) updateData.whatsappNumber = formData.whatsappNumber;
+        if (cgpa !== studentUser.cgpa) updateData.cgpa = cgpa;
+      }
       
       console.log("Submitting student profile update with data:", updateData);
       

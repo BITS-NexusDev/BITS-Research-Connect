@@ -1,3 +1,4 @@
+
 import { Application, ProfessorProfile, ResearchPosition, StudentProfile } from "./types";
 
 // Mock student profiles
@@ -51,7 +52,7 @@ export const mockProfessors: ProfessorProfile[] = [
     designation: "Professor",
     department: "Computer Science",
     chamberNumber: "A-212",
-    researchInterests: "Machine Learning, Computer Vision, Natural Language Processing",
+    researchInterests: ["Machine Learning", "Computer Vision", "Natural Language Processing"],
     createdAt: new Date("2023-01-01")
   },
   {
@@ -64,7 +65,7 @@ export const mockProfessors: ProfessorProfile[] = [
     designation: "Associate Professor",
     department: "Mechanical Engineering",
     chamberNumber: "B-113",
-    researchInterests: "Fluid Dynamics, Thermal Engineering",
+    researchInterests: ["Fluid Dynamics", "Thermal Engineering"],
     createdAt: new Date("2023-01-02")
   },
   {
@@ -77,7 +78,7 @@ export const mockProfessors: ProfessorProfile[] = [
     designation: "Assistant Professor",
     department: "Economics",
     chamberNumber: "C-302",
-    researchInterests: "Macroeconomics, Development Economics",
+    researchInterests: ["Macroeconomics", "Development Economics"],
     createdAt: new Date("2023-01-03")
   }
 ];

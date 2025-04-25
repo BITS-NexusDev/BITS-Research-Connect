@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { ProfessorProfile as ProfessorProfileType } from "@/lib/types";
 
 const designations = [
   "Professor",
@@ -57,12 +58,13 @@ const ProfessorProfileSetup = () => {
     
     // Pre-fill form if data exists
     if (user && user.role === "professor") {
+      const professorUser = user as ProfessorProfileType;
       setFormData({
-        designation: user.designation || "",
-        department: user.department || "",
-        chamberNumber: user.chamberNumber || "",
-        whatsappNumber: user.whatsappNumber || "",
-        researchInterests: user.researchInterests || ""
+        designation: professorUser.designation || "",
+        department: professorUser.department || "",
+        chamberNumber: professorUser.chamberNumber || "",
+        whatsappNumber: professorUser.whatsappNumber || "",
+        researchInterests: professorUser.researchInterests ? professorUser.researchInterests.join(", ") : ""
       });
     }
   }, [user, navigate]);
@@ -110,7 +112,17 @@ const ProfessorProfileSetup = () => {
     try {
       setIsSubmitting(true);
       
-      await updateProfile(formData);
+      // Convert research interests from string to array
+      const updateData = { ...formData };
+      if (formData.researchInterests) {
+        // Split by commas and trim whitespace
+        updateData.researchInterests = formData.researchInterests.split(",").map(item => item.trim());
+      } else {
+        // Empty array if no research interests
+        updateData.researchInterests = [];
+      }
+      
+      await updateProfile(updateData);
       
       toast({
         title: "Profile Updated",
