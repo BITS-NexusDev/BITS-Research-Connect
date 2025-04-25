@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User, UserRole, StudentProfile, ProfessorProfile } from "@/lib/types";
 import { mockDataService } from "@/lib/mock-data";
@@ -365,13 +366,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else {
           console.log("Student update successful, retrieving updated profile");
           // Update succeeded, get the updated profile
-          const { data: updatedProfile } = await supabase
+          const { data: updatedProfile, error: fetchError } = await supabase
             .from('students')
             .select('*')
             .eq('id', formattedUserId)
-            .single();
+            .maybeSingle(); // Using maybeSingle instead of single to handle when no records are found
             
-          if (updatedProfile) {
+          if (fetchError) {
+            console.error("Error fetching updated profile:", fetchError);
+            // If we can't fetch the updated profile, update the local user object with the data we just sent
+            const updatedStudentUser: StudentProfile = {
+              ...user as StudentProfile,
+              ...(data as Partial<StudentProfile>)
+            };
+            setUser(updatedStudentUser);
+          } else if (updatedProfile) {
             console.log("Retrieved updated student profile:", updatedProfile);
             const updatedStudentUser: StudentProfile = {
               ...user as StudentProfile,
@@ -383,6 +392,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               btechBranch: updatedProfile.btech_branch || (user as StudentProfile).btechBranch || "",
               dualDegree: updatedProfile.dual_degree || (user as StudentProfile).dualDegree || "",
               minorDegree: updatedProfile.minor_degree || (user as StudentProfile).minorDegree || "",
+            };
+            setUser(updatedStudentUser);
+          } else {
+            // No profile found, update the local user object with the data we just sent
+            const updatedStudentUser: StudentProfile = {
+              ...user as StudentProfile,
+              ...(data as Partial<StudentProfile>)
             };
             setUser(updatedStudentUser);
           }
@@ -432,13 +448,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else {
           console.log("Professor update successful, retrieving updated profile");
           // Update succeeded, get the updated profile
-          const { data: updatedProfile } = await supabase
+          const { data: updatedProfile, error: fetchError } = await supabase
             .from('professors')
             .select('*')
             .eq('id', formattedUserId)
-            .single();
+            .maybeSingle(); // Using maybeSingle instead of single to handle when no records are found
             
-          if (updatedProfile) {
+          if (fetchError) {
+            console.error("Error fetching updated profile:", fetchError);
+            // If we can't fetch the updated profile, update the local user object with the data we just sent
+            const updatedProfessorUser: ProfessorProfile = {
+              ...user as ProfessorProfile,
+              ...(data as Partial<ProfessorProfile>)
+            };
+            setUser(updatedProfessorUser);
+          } else if (updatedProfile) {
             console.log("Retrieved updated professor profile:", updatedProfile);
             const updatedProfessorUser: ProfessorProfile = {
               ...user as ProfessorProfile,
@@ -450,6 +474,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               department: updatedProfile.department || (user as ProfessorProfile).department || "",
               chamberNumber: updatedProfile.chamber_number || (user as ProfessorProfile).chamberNumber || "",
               researchInterests: updatedProfile.research_interests || [],
+            };
+            setUser(updatedProfessorUser);
+          } else {
+            // No profile found, update the local user object with the data we just sent
+            const updatedProfessorUser: ProfessorProfile = {
+              ...user as ProfessorProfile,
+              ...(data as Partial<ProfessorProfile>)
             };
             setUser(updatedProfessorUser);
           }
