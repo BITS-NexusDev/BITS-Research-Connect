@@ -55,8 +55,10 @@ export type Database = {
         Row: {
           chamber_number: string | null
           created_at: string | null
-          department: string
-          designation: Database["public"]["Enums"]["professor_designation"]
+          department: string | null
+          designation:
+            | Database["public"]["Enums"]["professor_designation"]
+            | null
           email: string
           full_name: string
           id: string
@@ -68,8 +70,10 @@ export type Database = {
         Insert: {
           chamber_number?: string | null
           created_at?: string | null
-          department: string
-          designation?: Database["public"]["Enums"]["professor_designation"]
+          department?: string | null
+          designation?:
+            | Database["public"]["Enums"]["professor_designation"]
+            | null
           email: string
           full_name: string
           id?: string
@@ -81,8 +85,10 @@ export type Database = {
         Update: {
           chamber_number?: string | null
           created_at?: string | null
-          department?: string
-          designation?: Database["public"]["Enums"]["professor_designation"]
+          department?: string | null
+          designation?:
+            | Database["public"]["Enums"]["professor_designation"]
+            | null
           email?: string
           full_name?: string
           id?: string
@@ -95,46 +101,55 @@ export type Database = {
       }
       research_positions: {
         Row: {
+          course_code: string
           created_at: string | null
-          deadline: string | null
-          description: string
-          duration_months: number | null
+          credits: number
           id: string
+          last_date_to_apply: string
+          minimum_cgpa: number
           number_of_openings: number | null
+          prerequisites: string | null
           professor_id: string
-          requirements: string | null
+          professor_name: string
+          research_area: string
+          semester: string
+          specific_requirements: string | null
           status: string
-          stipend_amount: number | null
-          title: string
-          updated_at: string | null
+          summary: string
         }
         Insert: {
+          course_code?: string
           created_at?: string | null
-          deadline?: string | null
-          description: string
-          duration_months?: number | null
+          credits?: number
           id?: string
+          last_date_to_apply?: string
+          minimum_cgpa?: number
           number_of_openings?: number | null
+          prerequisites?: string | null
           professor_id: string
-          requirements?: string | null
+          professor_name?: string
+          research_area?: string
+          semester?: string
+          specific_requirements?: string | null
           status?: string
-          stipend_amount?: number | null
-          title: string
-          updated_at?: string | null
+          summary: string
         }
         Update: {
+          course_code?: string
           created_at?: string | null
-          deadline?: string | null
-          description?: string
-          duration_months?: number | null
+          credits?: number
           id?: string
+          last_date_to_apply?: string
+          minimum_cgpa?: number
           number_of_openings?: number | null
+          prerequisites?: string | null
           professor_id?: string
-          requirements?: string | null
+          professor_name?: string
+          research_area?: string
+          semester?: string
+          specific_requirements?: string | null
           status?: string
-          stipend_amount?: number | null
-          title?: string
-          updated_at?: string | null
+          summary?: string
         }
         Relationships: [
           {
@@ -148,8 +163,8 @@ export type Database = {
       }
       students: {
         Row: {
-          btech_branch: string
-          cgpa: number
+          btech_branch: string | null
+          cgpa: number | null
           created_at: string | null
           dual_degree: string | null
           email: string
@@ -161,8 +176,8 @@ export type Database = {
           whatsapp_number: string | null
         }
         Insert: {
-          btech_branch: string
-          cgpa?: number
+          btech_branch?: string | null
+          cgpa?: number | null
           created_at?: string | null
           dual_degree?: string | null
           email: string
@@ -174,8 +189,8 @@ export type Database = {
           whatsapp_number?: string | null
         }
         Update: {
-          btech_branch?: string
-          cgpa?: number
+          btech_branch?: string | null
+          cgpa?: number | null
           created_at?: string | null
           dual_degree?: string | null
           email?: string
