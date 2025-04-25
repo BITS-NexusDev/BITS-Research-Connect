@@ -11,55 +11,31 @@ export type Database = {
     Tables: {
       applications: {
         Row: {
-          btech_branch: string | null
-          cgpa: number
-          created_at: string
-          dual_degree: string | null
-          email: string
-          full_name: string
+          cover_letter: string | null
+          created_at: string | null
           id: string
-          id_number: string
-          minor_degree: string | null
-          pitch: string
           position_id: string
-          resume_link: string | null
           status: string
           student_id: string
-          whatsapp_number: string
+          updated_at: string | null
         }
         Insert: {
-          btech_branch?: string | null
-          cgpa: number
-          created_at?: string
-          dual_degree?: string | null
-          email: string
-          full_name: string
+          cover_letter?: string | null
+          created_at?: string | null
           id?: string
-          id_number: string
-          minor_degree?: string | null
-          pitch: string
           position_id: string
-          resume_link?: string | null
-          status: string
+          status?: string
           student_id: string
-          whatsapp_number: string
+          updated_at?: string | null
         }
         Update: {
-          btech_branch?: string | null
-          cgpa?: number
-          created_at?: string
-          dual_degree?: string | null
-          email?: string
-          full_name?: string
+          cover_letter?: string | null
+          created_at?: string | null
           id?: string
-          id_number?: string
-          minor_degree?: string | null
-          pitch?: string
           position_id?: string
-          resume_link?: string | null
           status?: string
           student_id?: string
-          whatsapp_number?: string
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -73,138 +49,168 @@ export type Database = {
             foreignKeyName: "applications_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "students"
             referencedColumns: ["id"]
           },
         ]
       }
-      profiles: {
+      professors: {
         Row: {
-          btech_branch: string | null
-          cgpa: number | null
           chamber_number: string | null
-          created_at: string
-          department: string | null
-          designation:
-            | Database["public"]["Enums"]["professor_designation"]
-            | null
-          dual_degree: string | null
+          created_at: string | null
+          department: string
+          designation: Database["public"]["Enums"]["professor_designation"]
           email: string
           full_name: string
           id: string
           id_number: string
-          minor_degree: string | null
-          research_interests: string | null
-          role: string
+          research_interests: string[] | null
+          updated_at: string | null
           whatsapp_number: string | null
         }
         Insert: {
-          btech_branch?: string | null
-          cgpa?: number | null
           chamber_number?: string | null
-          created_at?: string
-          department?: string | null
-          designation?:
-            | Database["public"]["Enums"]["professor_designation"]
-            | null
-          dual_degree?: string | null
+          created_at?: string | null
+          department: string
+          designation?: Database["public"]["Enums"]["professor_designation"]
           email: string
           full_name: string
-          id: string
+          id?: string
           id_number: string
-          minor_degree?: string | null
-          research_interests?: string | null
-          role: string
+          research_interests?: string[] | null
+          updated_at?: string | null
           whatsapp_number?: string | null
         }
         Update: {
-          btech_branch?: string | null
-          cgpa?: number | null
           chamber_number?: string | null
-          created_at?: string
-          department?: string | null
-          designation?:
-            | Database["public"]["Enums"]["professor_designation"]
-            | null
-          dual_degree?: string | null
+          created_at?: string | null
+          department?: string
+          designation?: Database["public"]["Enums"]["professor_designation"]
           email?: string
           full_name?: string
           id?: string
           id_number?: string
-          minor_degree?: string | null
-          research_interests?: string | null
-          role?: string
+          research_interests?: string[] | null
+          updated_at?: string | null
           whatsapp_number?: string | null
         }
         Relationships: []
       }
       research_positions: {
         Row: {
-          course_code: string
-          created_at: string
-          credits: number
-          department: string
-          eligible_branches: string[]
+          created_at: string | null
+          deadline: string | null
+          description: string
+          duration_months: number | null
           id: string
-          last_date_to_apply: string
-          minimum_cgpa: number
-          number_of_openings: number
-          prerequisites: string | null
+          number_of_openings: number | null
           professor_id: string
-          professor_name: string
-          research_area: string
-          semester: string
-          specific_requirements: string | null
+          requirements: string | null
           status: string
-          summary: string
+          stipend_amount: number | null
+          title: string
+          updated_at: string | null
         }
         Insert: {
-          course_code: string
-          created_at?: string
-          credits: number
-          department: string
-          eligible_branches?: string[]
+          created_at?: string | null
+          deadline?: string | null
+          description: string
+          duration_months?: number | null
           id?: string
-          last_date_to_apply: string
-          minimum_cgpa: number
-          number_of_openings?: number
-          prerequisites?: string | null
+          number_of_openings?: number | null
           professor_id: string
-          professor_name: string
-          research_area: string
-          semester: string
-          specific_requirements?: string | null
-          status: string
-          summary: string
+          requirements?: string | null
+          status?: string
+          stipend_amount?: number | null
+          title: string
+          updated_at?: string | null
         }
         Update: {
-          course_code?: string
-          created_at?: string
-          credits?: number
-          department?: string
-          eligible_branches?: string[]
+          created_at?: string | null
+          deadline?: string | null
+          description?: string
+          duration_months?: number | null
           id?: string
-          last_date_to_apply?: string
-          minimum_cgpa?: number
-          number_of_openings?: number
-          prerequisites?: string | null
+          number_of_openings?: number | null
           professor_id?: string
-          professor_name?: string
-          research_area?: string
-          semester?: string
-          specific_requirements?: string | null
+          requirements?: string | null
           status?: string
-          summary?: string
+          stipend_amount?: number | null
+          title?: string
+          updated_at?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "research_positions_professor_id_fkey"
             columns: ["professor_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "professors"
             referencedColumns: ["id"]
           },
         ]
+      }
+      students: {
+        Row: {
+          btech_branch: string
+          cgpa: number
+          created_at: string | null
+          dual_degree: string | null
+          email: string
+          full_name: string
+          id: string
+          id_number: string
+          minor_degree: string | null
+          updated_at: string | null
+          whatsapp_number: string | null
+        }
+        Insert: {
+          btech_branch: string
+          cgpa?: number
+          created_at?: string | null
+          dual_degree?: string | null
+          email: string
+          full_name: string
+          id?: string
+          id_number: string
+          minor_degree?: string | null
+          updated_at?: string | null
+          whatsapp_number?: string | null
+        }
+        Update: {
+          btech_branch?: string
+          cgpa?: number
+          created_at?: string | null
+          dual_degree?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          id_number?: string
+          minor_degree?: string | null
+          updated_at?: string | null
+          whatsapp_number?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          role: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id: string
+          role: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          role?: string
+        }
+        Relationships: []
       }
     }
     Views: {
