@@ -29,49 +29,66 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session?.user) {
-          // If we have a session, fetch the user's profile from Supabase
-          const { data: profile } = await supabase
-            .from('profiles')
+          // If we have a session, check if the user is in the user_roles table
+          const { data: userRole } = await supabase
+            .from('user_roles')
             .select('*')
             .eq('id', session.user.id)
             .single();
             
-          if (profile) {
-            console.log("Found user profile:", profile);
-            // Map the Supabase profile to our User type
-            if (profile.role === "student") {
-              const studentUser: StudentProfile = {
-                id: profile.id,
-                fullName: profile.full_name,
-                idNumber: profile.id_number,
-                email: profile.email,
-                whatsappNumber: profile.whatsapp_number || "",
-                role: "student",
-                createdAt: new Date(profile.created_at),
-                cgpa: profile.cgpa || 0,
-                btechBranch: profile.btech_branch || "",
-                dualDegree: profile.dual_degree || "",
-                minorDegree: profile.minor_degree || "",
-              };
-              setUser(studentUser);
+          if (userRole) {
+            // Based on the role, fetch the appropriate profile
+            if (userRole.role === "student") {
+              const { data: studentProfile } = await supabase
+                .from('students')
+                .select('*')
+                .eq('id', session.user.id)
+                .single();
+                
+              if (studentProfile) {
+                console.log("Found student profile:", studentProfile);
+                const studentUser: StudentProfile = {
+                  id: studentProfile.id,
+                  fullName: studentProfile.full_name,
+                  idNumber: studentProfile.id_number,
+                  email: studentProfile.email,
+                  whatsappNumber: studentProfile.whatsapp_number || "",
+                  role: "student",
+                  createdAt: new Date(studentProfile.created_at),
+                  cgpa: studentProfile.cgpa || 0,
+                  btechBranch: studentProfile.btech_branch || "",
+                  dualDegree: studentProfile.dual_degree || "",
+                  minorDegree: studentProfile.minor_degree || "",
+                };
+                setUser(studentUser);
+              }
             } else {
-              const professorUser: ProfessorProfile = {
-                id: profile.id,
-                fullName: profile.full_name,
-                idNumber: profile.id_number,
-                email: profile.email,
-                whatsappNumber: profile.whatsapp_number || "",
-                role: "professor",
-                createdAt: new Date(profile.created_at),
-                designation: profile.designation || "Assistant Professor",
-                department: profile.department || "",
-                chamberNumber: profile.chamber_number || "",
-                researchInterests: profile.research_interests || "",
-              };
-              setUser(professorUser);
+              const { data: professorProfile } = await supabase
+                .from('professors')
+                .select('*')
+                .eq('id', session.user.id)
+                .single();
+                
+              if (professorProfile) {
+                console.log("Found professor profile:", professorProfile);
+                const professorUser: ProfessorProfile = {
+                  id: professorProfile.id,
+                  fullName: professorProfile.full_name,
+                  idNumber: professorProfile.id_number,
+                  email: professorProfile.email,
+                  whatsappNumber: professorProfile.whatsapp_number || "",
+                  role: "professor",
+                  createdAt: new Date(professorProfile.created_at),
+                  designation: professorProfile.designation || "Assistant Professor",
+                  department: professorProfile.department || "",
+                  chamberNumber: professorProfile.chamber_number || "",
+                  researchInterests: professorProfile.research_interests?.[0] || "",
+                };
+                setUser(professorUser);
+              }
             }
           } else {
-            // Fallback to mock data if no profile found
+            // Fallback to mock data if no user role found
             const currentUser = mockDataService.getCurrentUser();
             setUser(currentUser);
           }
@@ -125,15 +142,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (data.user) {
-        // Fetch user profile from Supabase
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
+        // Get user role
+        const { data: userRole } = await supabase
+          .from('user_roles')
           .select('*')
           .eq('id', data.user.id)
           .single();
           
-        if (profileError) {
-          console.log("Profile fetch error:", profileError);
+        if (!userRole) {
+          console.log("User role not found, trying mock service");
           // Try the mock service as fallback
           const response = await mockDataService.login(email, password);
           if (response.success) {
@@ -151,39 +168,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setError(response.error || "Login failed");
             throw new Error(response.error || "Login failed");
           }
-        } else if (profile) {
-          console.log("Login successful, found profile:", profile);
-          // Map the Supabase profile to our User type
-          if (profile.role === "student") {
-            const studentUser: StudentProfile = {
-              id: profile.id,
-              fullName: profile.full_name,
-              idNumber: profile.id_number,
-              email: profile.email,
-              whatsappNumber: profile.whatsapp_number || "",
-              role: "student",
-              createdAt: new Date(profile.created_at),
-              cgpa: profile.cgpa || 0,
-              btechBranch: profile.btech_branch || "",
-              dualDegree: profile.dual_degree || "",
-              minorDegree: profile.minor_degree || "",
-            };
-            setUser(studentUser);
+        } else {
+          // Based on the role, fetch the appropriate profile
+          if (userRole.role === "student") {
+            const { data: studentProfile } = await supabase
+              .from('students')
+              .select('*')
+              .eq('id', data.user.id)
+              .single();
+              
+            if (studentProfile) {
+              console.log("Login successful, found student profile:", studentProfile);
+              const studentUser: StudentProfile = {
+                id: studentProfile.id,
+                fullName: studentProfile.full_name,
+                idNumber: studentProfile.id_number,
+                email: studentProfile.email,
+                whatsappNumber: studentProfile.whatsapp_number || "",
+                role: "student",
+                createdAt: new Date(studentProfile.created_at),
+                cgpa: studentProfile.cgpa || 0,
+                btechBranch: studentProfile.btech_branch || "",
+                dualDegree: studentProfile.dual_degree || "",
+                minorDegree: studentProfile.minor_degree || "",
+              };
+              setUser(studentUser);
+            }
           } else {
-            const professorUser: ProfessorProfile = {
-              id: profile.id,
-              fullName: profile.full_name,
-              idNumber: profile.id_number,
-              email: profile.email,
-              whatsappNumber: profile.whatsapp_number || "",
-              role: "professor",
-              createdAt: new Date(profile.created_at),
-              designation: profile.designation || "Assistant Professor",
-              department: profile.department || "",
-              chamberNumber: profile.chamber_number || "",
-              researchInterests: profile.research_interests || "",
-            };
-            setUser(professorUser);
+            const { data: professorProfile } = await supabase
+              .from('professors')
+              .select('*')
+              .eq('id', data.user.id)
+              .single();
+              
+            if (professorProfile) {
+              console.log("Login successful, found professor profile:", professorProfile);
+              const professorUser: ProfessorProfile = {
+                id: professorProfile.id,
+                fullName: professorProfile.full_name,
+                idNumber: professorProfile.id_number,
+                email: professorProfile.email,
+                whatsappNumber: professorProfile.whatsapp_number || "",
+                role: "professor",
+                createdAt: new Date(professorProfile.created_at),
+                designation: professorProfile.designation || "Assistant Professor",
+                department: professorProfile.department || "",
+                chamberNumber: professorProfile.chamber_number || "",
+                researchInterests: professorProfile.research_interests?.[0] || "",
+              };
+              setUser(professorUser);
+            }
           }
           return;
         }
@@ -283,17 +317,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     try {
       console.log("Updating profile with data:", data);
-      // Try to update profile in Supabase
-      const updateData: any = {};
       
-      // Add base user fields
-      if (data.fullName) updateData.full_name = data.fullName;
-      if (data.idNumber) updateData.id_number = data.idNumber;
-      if (data.email) updateData.email = data.email;
-      if (data.whatsappNumber) updateData.whatsapp_number = data.whatsappNumber;
+      // Format the user ID as a UUID
+      const formattedUserId = generateUUID(user.id);
       
-      // Add role-specific fields
       if (user.role === "student") {
+        // Update student profile
+        const updateData: any = {};
+        
+        // Add base user fields
+        if (data.fullName) updateData.full_name = data.fullName;
+        if (data.idNumber) updateData.id_number = data.idNumber;
+        if (data.email) updateData.email = data.email;
+        if (data.whatsappNumber) updateData.whatsapp_number = data.whatsappNumber;
+        
+        // Add student-specific fields
         if ((data as Partial<StudentProfile>).cgpa !== undefined) 
           updateData.cgpa = (data as Partial<StudentProfile>).cgpa;
         if ((data as Partial<StudentProfile>).btechBranch !== undefined) 
@@ -302,64 +340,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           updateData.dual_degree = (data as Partial<StudentProfile>).dualDegree;
         if ((data as Partial<StudentProfile>).minorDegree !== undefined) 
           updateData.minor_degree = (data as Partial<StudentProfile>).minorDegree;
-      } else {
-        if ((data as Partial<ProfessorProfile>).designation !== undefined) 
-          updateData.designation = (data as Partial<ProfessorProfile>).designation;
-        if ((data as Partial<ProfessorProfile>).department !== undefined) 
-          updateData.department = (data as Partial<ProfessorProfile>).department;
-        if ((data as Partial<ProfessorProfile>).chamberNumber !== undefined) 
-          updateData.chamber_number = (data as Partial<ProfessorProfile>).chamberNumber;
-        if ((data as Partial<ProfessorProfile>).researchInterests !== undefined) 
-          updateData.research_interests = (data as Partial<ProfessorProfile>).researchInterests;
-      }
-      
-      console.log("Prepared Supabase update data:", updateData);
-      console.log("Updating profile for user ID:", user.id);
-      
-      // Format the user ID as a UUID
-      const formattedUserId = generateUUID(user.id);
-      
-      // Update in Supabase
-      const { error: supabaseError } = await supabase
-        .from('profiles')
-        .update(updateData)
-        .eq('id', formattedUserId);
         
-      if (supabaseError) {
-        console.error("Supabase update error:", supabaseError);
+        console.log("Prepared student update data:", updateData);
         
-        // Fallback to mock service
-        let response;
-        if (user.role === "student") {
-          response = await mockDataService.updateStudentProfile(
+        // Update in Supabase
+        const { error: supabaseError } = await supabase
+          .from('students')
+          .update(updateData)
+          .eq('id', formattedUserId);
+          
+        if (supabaseError) {
+          console.error("Student update error:", supabaseError);
+          
+          // Fallback to mock service
+          const response = await mockDataService.updateStudentProfile(
             user.id, 
             data as Partial<StudentProfile>
           );
-        } else {
-          response = await mockDataService.updateProfessorProfile(
-            user.id, 
-            data as Partial<ProfessorProfile>
-          );
-        }
-        
-        if (response.success) {
-          setUser(response.profile as User);
-        } else {
-          setError(response.error || "Profile update failed");
-        }
-      } else {
-        console.log("Supabase update successful, retrieving updated profile");
-        // Update succeeded, get the updated profile
-        const { data: updatedProfile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', formattedUserId)
-          .single();
           
-        if (updatedProfile) {
-          console.log("Retrieved updated profile:", updatedProfile);
-          // Update local user state with merged data
-          if (user.role === "student") {
+          if (response.success) {
+            setUser(response.profile as User);
+          } else {
+            setError(response.error || "Profile update failed");
+          }
+        } else {
+          console.log("Student update successful, retrieving updated profile");
+          // Update succeeded, get the updated profile
+          const { data: updatedProfile } = await supabase
+            .from('students')
+            .select('*')
+            .eq('id', formattedUserId)
+            .single();
+            
+          if (updatedProfile) {
+            console.log("Retrieved updated student profile:", updatedProfile);
             const updatedStudentUser: StudentProfile = {
               ...user as StudentProfile,
               fullName: updatedProfile.full_name || user.fullName,
@@ -372,7 +386,61 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               minorDegree: updatedProfile.minor_degree || (user as StudentProfile).minorDegree || "",
             };
             setUser(updatedStudentUser);
+          }
+        }
+      } else {
+        // Update professor profile
+        const updateData: any = {};
+        
+        // Add base user fields
+        if (data.fullName) updateData.full_name = data.fullName;
+        if (data.idNumber) updateData.id_number = data.idNumber;
+        if (data.email) updateData.email = data.email;
+        if (data.whatsappNumber) updateData.whatsapp_number = data.whatsappNumber;
+        
+        // Add professor-specific fields
+        if ((data as Partial<ProfessorProfile>).designation !== undefined) 
+          updateData.designation = (data as Partial<ProfessorProfile>).designation;
+        if ((data as Partial<ProfessorProfile>).department !== undefined) 
+          updateData.department = (data as Partial<ProfessorProfile>).department;
+        if ((data as Partial<ProfessorProfile>).chamberNumber !== undefined) 
+          updateData.chamber_number = (data as Partial<ProfessorProfile>).chamberNumber;
+        if ((data as Partial<ProfessorProfile>).researchInterests !== undefined) 
+          updateData.research_interests = [(data as Partial<ProfessorProfile>).researchInterests];
+        
+        console.log("Prepared professor update data:", updateData);
+        
+        // Update in Supabase
+        const { error: supabaseError } = await supabase
+          .from('professors')
+          .update(updateData)
+          .eq('id', formattedUserId);
+          
+        if (supabaseError) {
+          console.error("Professor update error:", supabaseError);
+          
+          // Fallback to mock service
+          const response = await mockDataService.updateProfessorProfile(
+            user.id, 
+            data as Partial<ProfessorProfile>
+          );
+          
+          if (response.success) {
+            setUser(response.profile as User);
           } else {
+            setError(response.error || "Profile update failed");
+          }
+        } else {
+          console.log("Professor update successful, retrieving updated profile");
+          // Update succeeded, get the updated profile
+          const { data: updatedProfile } = await supabase
+            .from('professors')
+            .select('*')
+            .eq('id', formattedUserId)
+            .single();
+            
+          if (updatedProfile) {
+            console.log("Retrieved updated professor profile:", updatedProfile);
             const updatedProfessorUser: ProfessorProfile = {
               ...user as ProfessorProfile,
               fullName: updatedProfile.full_name || user.fullName,
@@ -382,18 +450,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               designation: updatedProfile.designation || (user as ProfessorProfile).designation || "Assistant Professor",
               department: updatedProfile.department || (user as ProfessorProfile).department || "",
               chamberNumber: updatedProfile.chamber_number || (user as ProfessorProfile).chamberNumber || "",
-              researchInterests: updatedProfile.research_interests || (user as ProfessorProfile).researchInterests || "",
+              researchInterests: updatedProfile.research_interests?.[0] || (user as ProfessorProfile).researchInterests || "",
             };
             setUser(updatedProfessorUser);
           }
-        } else {
-          console.log("Could not retrieve updated profile, updating user state with provided data");
-          // If we can't get the updated profile, just update with the provided data
-          const updatedUser = {
-            ...user,
-            ...data,
-          };
-          setUser(updatedUser as User);
         }
       }
     } catch (err) {
