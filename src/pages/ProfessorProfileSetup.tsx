@@ -44,7 +44,7 @@ const ProfessorProfileSetup = () => {
     department: "",
     chamberNumber: "",
     whatsappNumber: "",
-    researchInterests: ""
+    researchInterests: ""  // Store as string in the form
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -64,6 +64,7 @@ const ProfessorProfileSetup = () => {
         department: professorUser.department || "",
         chamberNumber: professorUser.chamberNumber || "",
         whatsappNumber: professorUser.whatsappNumber || "",
+        // Convert array of research interests to comma-separated string for form display
         researchInterests: professorUser.researchInterests ? professorUser.researchInterests.join(", ") : ""
       });
     }
@@ -112,8 +113,15 @@ const ProfessorProfileSetup = () => {
     try {
       setIsSubmitting(true);
       
-      // Convert research interests from string to array
-      const updateData = { ...formData };
+      // Prepare data for update
+      const updateData: Partial<ProfessorProfileType> = {
+        designation: formData.designation as ProfessorProfileType['designation'],
+        department: formData.department,
+        chamberNumber: formData.chamberNumber,
+        whatsappNumber: formData.whatsappNumber
+      };
+      
+      // Convert research interests from string to array for database storage
       if (formData.researchInterests) {
         // Split by commas and trim whitespace
         updateData.researchInterests = formData.researchInterests.split(",").map(item => item.trim());
