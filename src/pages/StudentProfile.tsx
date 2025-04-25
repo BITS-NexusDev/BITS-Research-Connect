@@ -58,7 +58,7 @@ const StudentProfile = () => {
     e.preventDefault();
     
     // Validate WhatsApp number (10 digits)
-    if (!/^\d{10}$/.test(formData.whatsappNumber)) {
+    if (formData.whatsappNumber && !/^\d{10}$/.test(formData.whatsappNumber)) {
       toast({
         title: "Invalid WhatsApp Number",
         description: "Please enter a 10-digit WhatsApp number (without country code)",
@@ -81,15 +81,19 @@ const StudentProfile = () => {
     try {
       setIsSubmitting(true);
       
-      console.log("Submitting student profile update with data:", {
-        ...formData,
-        cgpa
-      });
+      // Create a data object with only the fields that have changed
+      const updateData: any = {};
       
-      await updateProfile({
-        ...formData,
-        cgpa
-      });
+      // Only include fields that have values and are different from the current user data
+      if (formData.btechBranch !== user?.btechBranch) updateData.btechBranch = formData.btechBranch;
+      if (formData.dualDegree !== user?.dualDegree) updateData.dualDegree = formData.dualDegree;
+      if (formData.minorDegree !== user?.minorDegree) updateData.minorDegree = formData.minorDegree;
+      if (formData.whatsappNumber !== user?.whatsappNumber) updateData.whatsappNumber = formData.whatsappNumber;
+      if (cgpa !== user?.cgpa) updateData.cgpa = cgpa;
+      
+      console.log("Submitting student profile update with data:", updateData);
+      
+      await updateProfile(updateData);
       
       toast({
         title: "Profile Updated",
@@ -131,6 +135,7 @@ const StudentProfile = () => {
                   value={formData.fullName}
                   onChange={handleChange}
                   required
+                  disabled
                 />
               </div>
               
