@@ -49,14 +49,14 @@ const Login = () => {
         });
         
         // Redirect based on user role in the session
-        const { data: profileData } = await supabase
-          .from('profiles')
+        const { data: userRoleData } = await supabase
+          .from('user_roles')
           .select('role')
           .eq('id', data.user.id)
           .single();
           
-        if (profileData && profileData.role) {
-          if (profileData.role === "student") {
+        if (userRoleData && userRoleData.role) {
+          if (userRoleData.role === "student") {
             navigate("/student-dashboard");
           } else {
             navigate("/professor-dashboard");

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { StudentProfile as StudentProfileType } from "@/lib/types";
 
 const StudentProfile = () => {
   const { user, updateProfile } = useAuth();
@@ -35,16 +36,18 @@ const StudentProfile = () => {
     
     // Pre-fill form with existing data
     if (user && user.role === "student") {
+      // Type assertion to access student-specific properties safely
+      const studentUser = user as StudentProfileType;
       console.log("Loading student data into form:", user);
       setFormData({
-        fullName: user.fullName || "",
-        idNumber: user.idNumber || "",
-        email: user.email || "",
-        btechBranch: user.btechBranch || "",
-        dualDegree: user.dualDegree || "",
-        minorDegree: user.minorDegree || "",
-        whatsappNumber: user.whatsappNumber || "",
-        cgpa: user.cgpa?.toString() || ""
+        fullName: studentUser.fullName || "",
+        idNumber: studentUser.idNumber || "",
+        email: studentUser.email || "",
+        btechBranch: studentUser.btechBranch || "",
+        dualDegree: studentUser.dualDegree || "",
+        minorDegree: studentUser.minorDegree || "",
+        whatsappNumber: studentUser.whatsappNumber || "",
+        cgpa: studentUser.cgpa?.toString() || ""
       });
     }
   }, [user, navigate]);
