@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { PositionsProvider } from "./contexts/PositionsContext";
 import { useAuth } from "./contexts/AuthContext"; 
+import SupabaseDebugger from "./components/SupabaseDebugger";
 
 // Pages
 import Index from "./pages/Index";
@@ -123,6 +124,8 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <AppRoutes />
+            {/* Only show debugger when not in production */}
+            {import.meta.env.DEV && <SupabaseDebugger />}
           </BrowserRouter>
         </PositionsProvider>
       </AuthProvider>

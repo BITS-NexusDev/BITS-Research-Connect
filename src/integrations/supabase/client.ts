@@ -63,7 +63,22 @@ export const supabase = createClient<Database>(
           }
         }
         
-        return fetch(requestUrl, requestOptions);
+        return fetch(requestUrl, requestOptions)
+          .then(response => {
+            // Log response status for debugging
+            console.log(`Response status: ${response.status} ${response.statusText}`);
+            
+            if (!response.ok) {
+              console.warn(`Error response from ${requestUrl}: ${response.status} ${response.statusText}`);
+            }
+            
+            // Clone and return the response
+            return response;
+          })
+          .catch(error => {
+            console.error(`Network error for ${requestUrl}:`, error);
+            throw error;
+          });
       }
     }
   }
@@ -72,6 +87,22 @@ export const supabase = createClient<Database>(
 // Add debug logging for API calls
 supabase.auth.onAuthStateChange((event, session) => {
   console.log('Supabase Auth Event:', event, session?.user?.id || 'No user');
+  
+  if (session?.user) {
+    // Check permissions to user_roles table as a sanity check
+    supabase
+      .from('user_roles')
+      .select('role')
+      .eq('id', session.user.id)
+      .single()
+      .then(({ data, error }) => {
+        if (error) {
+          console.warn('No access to user_roles table or user not found:', error);
+        } else if (data) {
+          console.log('User role:', data.role);
+        }
+      });
+  }
 });
 
 // Add debug logging for data operations
@@ -98,6 +129,21 @@ supabase.from = function(table) {
   builder.select = function(columns) {
     console.log(`Selecting from ${table}${columns ? `: ${columns}` : ''}`);
     return originalSelect.call(this, columns);
+  };
+  
+  // Add better error handling for single/maybeSingle
+  const originalSingle = builder.single;
+  builder.single = function() {
+    console.log(`Using .single() on ${table} - Note: This will error if no row is returned`);
+    const result = originalSingle.call(this);
+    return result;
+  };
+  
+  const originalMaybeSingle = builder.maybeSingle;
+  builder.maybeSingle = function() {
+    console.log(`Using .maybeSingle() on ${table} - This is safer than .single()`);
+    const result = originalMaybeSingle.call(this);
+    return result;
   };
   
   return builder;
