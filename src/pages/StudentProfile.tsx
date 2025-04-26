@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { StudentProfile as StudentProfileType } from "@/lib/types";
 
 const StudentProfile = () => {
   const { user, updateProfile } = useAuth();
@@ -34,25 +34,22 @@ const StudentProfile = () => {
     }
     
     // Pre-fill form with existing data
-    if (user?.role === "student") {
-      const studentUser = user as StudentProfileType;
-      console.log("Loading student data into form:", studentUser);
+    if (user && user.role === "student") {
       setFormData({
-        fullName: studentUser.fullName || "",
-        idNumber: studentUser.idNumber || "",
-        email: studentUser.email || "",
-        btechBranch: studentUser.btechBranch || "",
-        dualDegree: studentUser.dualDegree || "",
-        minorDegree: studentUser.minorDegree || "",
-        whatsappNumber: studentUser.whatsappNumber || "",
-        cgpa: studentUser.cgpa?.toString() || ""
+        fullName: user.fullName || "",
+        idNumber: user.idNumber || "",
+        email: user.email || "",
+        btechBranch: user.btechBranch || "",
+        dualDegree: user.dualDegree || "",
+        minorDegree: user.minorDegree || "",
+        whatsappNumber: user.whatsappNumber || "",
+        cgpa: user.cgpa?.toString() || ""
       });
     }
   }, [user, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    console.log(`Changing ${name} to ${value}`);
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -60,7 +57,7 @@ const StudentProfile = () => {
     e.preventDefault();
     
     // Validate WhatsApp number (10 digits)
-    if (formData.whatsappNumber && !/^\d{10}$/.test(formData.whatsappNumber)) {
+    if (!/^\d{10}$/.test(formData.whatsappNumber)) {
       toast({
         title: "Invalid WhatsApp Number",
         description: "Please enter a 10-digit WhatsApp number (without country code)",
@@ -83,22 +80,10 @@ const StudentProfile = () => {
     try {
       setIsSubmitting(true);
       
-      // Create a data object with only the fields that have changed
-      const updateData: any = {};
-      
-      // Only include fields that have values and are different from the current user data
-      if (user?.role === "student") {
-        const studentUser = user as StudentProfileType;
-        if (formData.btechBranch !== studentUser.btechBranch) updateData.btechBranch = formData.btechBranch;
-        if (formData.dualDegree !== studentUser.dualDegree) updateData.dualDegree = formData.dualDegree;
-        if (formData.minorDegree !== studentUser.minorDegree) updateData.minorDegree = formData.minorDegree;
-        if (formData.whatsappNumber !== studentUser.whatsappNumber) updateData.whatsappNumber = formData.whatsappNumber;
-        if (cgpa !== studentUser.cgpa) updateData.cgpa = cgpa;
-      }
-      
-      console.log("Submitting student profile update with data:", updateData);
-      
-      await updateProfile(updateData);
+      await updateProfile({
+        ...formData,
+        cgpa
+      });
       
       toast({
         title: "Profile Updated",
@@ -108,7 +93,6 @@ const StudentProfile = () => {
       // Redirect back to dashboard
       navigate("/student-dashboard");
     } catch (error) {
-      console.error("Profile update error:", error);
       toast({
         title: "Update Failed",
         description: "Failed to update profile. Please try again.",
@@ -140,7 +124,6 @@ const StudentProfile = () => {
                   value={formData.fullName}
                   onChange={handleChange}
                   required
-                  disabled
                 />
               </div>
               

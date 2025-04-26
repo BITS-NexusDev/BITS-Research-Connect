@@ -9,7 +9,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { ProfessorProfile as ProfessorProfileType } from "@/lib/types";
 
 const designations = [
   "Professor",
@@ -47,7 +46,7 @@ const ProfessorProfile = () => {
     department: "",
     chamberNumber: "",
     whatsappNumber: "",
-    researchInterests: "" // Store as a string in the form
+    researchInterests: ""
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -61,17 +60,15 @@ const ProfessorProfile = () => {
     
     // Pre-fill form with existing data
     if (user && user.role === "professor") {
-      const professorUser = user as ProfessorProfileType;
       setFormData({
-        fullName: professorUser.fullName || "",
-        idNumber: professorUser.idNumber || "",
-        email: professorUser.email || "",
-        designation: professorUser.designation || "",
-        department: professorUser.department || "",
-        chamberNumber: professorUser.chamberNumber || "",
-        whatsappNumber: professorUser.whatsappNumber || "",
-        // Convert array of research interests to comma-separated string for form display
-        researchInterests: professorUser.researchInterests ? professorUser.researchInterests.join(", ") : ""
+        fullName: user.fullName || "",
+        idNumber: user.idNumber || "",
+        email: user.email || "",
+        designation: user.designation || "",
+        department: user.department || "",
+        chamberNumber: user.chamberNumber || "",
+        whatsappNumber: user.whatsappNumber || "",
+        researchInterests: user.researchInterests || ""
       });
     }
   }, [user, navigate]);
@@ -119,25 +116,7 @@ const ProfessorProfile = () => {
     try {
       setIsSubmitting(true);
       
-      // Prepare data for update
-      const updateData: Partial<ProfessorProfileType> = {
-        fullName: formData.fullName,
-        designation: formData.designation as ProfessorProfileType['designation'],
-        department: formData.department,
-        chamberNumber: formData.chamberNumber,
-        whatsappNumber: formData.whatsappNumber
-      };
-      
-      // Convert research interests from string to array for database storage
-      if (formData.researchInterests) {
-        // Split by commas and trim whitespace
-        updateData.researchInterests = formData.researchInterests.split(",").map(item => item.trim());
-      } else {
-        // Empty array if no research interests
-        updateData.researchInterests = [];
-      }
-      
-      await updateProfile(updateData);
+      await updateProfile(formData);
       
       toast({
         title: "Profile Updated",

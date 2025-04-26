@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
@@ -23,8 +22,6 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePositions } from "@/contexts/PositionsContext";
 import { useToast } from "@/hooks/use-toast";
@@ -39,7 +36,6 @@ const StudentDashboard = () => {
   // Application form state
   const [selectedPosition, setSelectedPosition] = useState<ResearchPosition | null>(null);
   const [pitch, setPitch] = useState("");
-  const [resumeLink, setResumeLink] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Filter state
@@ -82,18 +78,9 @@ const StudentDashboard = () => {
   const handleApply = async () => {
     if (!selectedPosition) return;
     
-    if (!resumeLink.startsWith('https://drive.google.com/')) {
-      toast({
-        title: "Invalid Resume Link",
-        description: "Please provide a valid Google Drive link to your resume",
-        variant: "destructive"
-      });
-      return;
-    }
-    
     try {
       setIsSubmitting(true);
-      await createApplication(selectedPosition.id, pitch, resumeLink);
+      await createApplication(selectedPosition.id, pitch);
       
       toast({
         title: "Application Submitted",
@@ -103,7 +90,6 @@ const StudentDashboard = () => {
       // Reset form
       setSelectedPosition(null);
       setPitch("");
-      setResumeLink("");
     } catch (error: any) {
       toast({
         title: "Submission Failed",
@@ -302,70 +288,9 @@ const StudentDashboard = () => {
                                 </DialogDescription>
                               </DialogHeader>
                               <div className="space-y-4 py-4">
-                                {/* Pre-filled Student Details */}
-                                <div className="rounded-lg bg-muted p-4 space-y-3">
-                                  <h4 className="font-medium text-sm">Your Details (will be shared with the professor)</h4>
-                                  <div className="grid grid-cols-2 gap-3 text-sm">
-                                    <div>
-                                      <p className="text-muted-foreground">Full Name</p>
-                                      <p className="font-medium">{student.fullName}</p>
-                                    </div>
-                                    <div>
-                                      <p className="text-muted-foreground">ID Number</p>
-                                      <p className="font-medium">{student.idNumber}</p>
-                                    </div>
-                                    <div>
-                                      <p className="text-muted-foreground">Email</p>
-                                      <p className="font-medium">{student.email}</p>
-                                    </div>
-                                    <div>
-                                      <p className="text-muted-foreground">WhatsApp</p>
-                                      <p className="font-medium">{student.whatsappNumber}</p>
-                                    </div>
-                                    <div>
-                                      <p className="text-muted-foreground">CGPA</p>
-                                      <p className="font-medium">{student.cgpa}</p>
-                                    </div>
-                                    {student.btechBranch && (
-                                      <div>
-                                        <p className="text-muted-foreground">B.Tech Branch</p>
-                                        <p className="font-medium">{student.btechBranch}</p>
-                                      </div>
-                                    )}
-                                    {student.dualDegree && (
-                                      <div>
-                                        <p className="text-muted-foreground">Dual Degree</p>
-                                        <p className="font-medium">{student.dualDegree}</p>
-                                      </div>
-                                    )}
-                                    {student.minorDegree && (
-                                      <div>
-                                        <p className="text-muted-foreground">Minor Degree</p>
-                                        <p className="font-medium">{student.minorDegree}</p>
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-
-                                {/* Resume Link Input */}
                                 <div>
-                                  <Label htmlFor="resumeLink" className="text-sm font-medium mb-2">Resume Link (Google Drive)</Label>
-                                  <Input
-                                    id="resumeLink"
-                                    placeholder="https://drive.google.com/file/d/..."
-                                    value={resumeLink}
-                                    onChange={(e) => setResumeLink(e.target.value)}
-                                  />
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    Please share a Google Drive link to your resume
-                                  </p>
-                                </div>
-
-                                {/* Pitch Text Area */}
-                                <div>
-                                  <Label htmlFor="pitch" className="text-sm font-medium mb-2">Your Pitch</Label>
-                                  <Textarea
-                                    id="pitch"
+                                  <p className="text-sm font-medium mb-2">Your Pitch</p>
+                                  <Textarea 
                                     placeholder="Explain why you're a good fit for this position..."
                                     value={pitch}
                                     onChange={(e) => setPitch(e.target.value)}
@@ -374,11 +299,13 @@ const StudentDashboard = () => {
                                 </div>
                               </div>
                               <DialogFooter>
-                                <Button 
-                                  type="submit"
-                                  className="bg-bits-blue hover:bg-bits-darkblue"
-                                  disabled={!pitch.trim() || !resumeLink.trim() || isSubmitting}
-                                  onClick={handleApply}
+                                <Button type="submit" 
+                                  className="bg-bits-blue hover:bg-bits-darkblue" 
+                                  disabled={!pitch.trim() || isSubmitting}
+                                  onClick={() => {
+                                    setSelectedPosition(position);
+                                    handleApply();
+                                  }}
                                 >
                                   {isSubmitting ? "Submitting..." : "Submit Application"}
                                 </Button>

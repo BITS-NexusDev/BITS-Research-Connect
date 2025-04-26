@@ -1,3 +1,4 @@
+
 export type UserRole = "student" | "professor";
 
 export interface BaseUser {
@@ -12,7 +13,7 @@ export interface BaseUser {
 
 export interface StudentProfile extends BaseUser {
   role: "student";
-  btechBranch: string;
+  btechBranch?: string;
   dualDegree?: string;
   minorDegree?: string;
   cgpa: number;
@@ -23,7 +24,7 @@ export interface ProfessorProfile extends BaseUser {
   designation: "Professor" | "Senior Professor" | "Associate Professor" | "Assistant Professor" | "Junior Professor";
   department: string;
   chamberNumber: string;
-  researchInterests?: string[];
+  researchInterests?: string;
 }
 
 export interface ResearchPosition {
@@ -40,36 +41,7 @@ export interface ResearchPosition {
   specificRequirements?: string;
   createdAt: Date;
   status: "open" | "closed";
-  department: string;
-  eligibleBranches: string[];
-  numberOfOpenings: number;
-  lastDateToApply: Date;
-}
-
-export interface DbResearchPosition {
-  id: string;
-  professor_id: string;
-  title: string;
-  description: string;
-  requirements?: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
-  deadline?: string;
-  number_of_openings?: number;
-  duration_months?: number;
-  stipend_amount?: number;
-  department?: string;
-}
-
-export interface DbApplication {
-  id: string;
-  student_id: string;
-  position_id: string;
-  status: string;
-  created_at: string;
-  updated_at?: string;
-  cover_letter?: string;
+  department: string; // Professor's department
 }
 
 export interface Application {

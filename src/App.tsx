@@ -6,8 +6,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { PositionsProvider } from "./contexts/PositionsContext";
-import { useAuth } from "./contexts/AuthContext"; 
-import SupabaseDebugger from "./components/SupabaseDebugger";
 
 // Pages
 import Index from "./pages/Index";
@@ -26,95 +24,6 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// Auth route wrapper component
-const RequireAuth = ({ children, redirectTo, requiredRole }: { 
-  children: JSX.Element, 
-  redirectTo: string,
-  requiredRole?: "student" | "professor" 
-}) => {
-  const { user, loading } = useAuth();
-  
-  if (loading) {
-    return <div className="flex items-center justify-center h-screen">Loading...</div>;
-  }
-  
-  if (!user) {
-    return <Navigate to={redirectTo} replace />;
-  }
-  
-  if (requiredRole && user.role !== requiredRole) {
-    return <Navigate to="/" replace />;
-  }
-  
-  return children;
-};
-
-const AppRoutes = () => {
-  const { user } = useAuth();
-  
-  return (
-    <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/login" element={
-        user ? (
-          <Navigate to={user.role === "student" ? "/student-dashboard" : "/professor-dashboard"} replace />
-        ) : (
-          <Login />
-        )
-      } />
-      <Route path="/register" element={
-        user ? (
-          <Navigate to={user.role === "student" ? "/student-dashboard" : "/professor-dashboard"} replace />
-        ) : (
-          <Register />
-        )
-      } />
-      <Route path="/student-profile-setup" element={
-        <RequireAuth redirectTo="/login" requiredRole="student">
-          <StudentProfileSetup />
-        </RequireAuth>
-      } />
-      <Route path="/professor-profile-setup" element={
-        <RequireAuth redirectTo="/login" requiredRole="professor">
-          <ProfessorProfileSetup />
-        </RequireAuth>
-      } />
-      <Route path="/student-dashboard" element={
-        <RequireAuth redirectTo="/login" requiredRole="student">
-          <StudentDashboard />
-        </RequireAuth>
-      } />
-      <Route path="/professor-dashboard" element={
-        <RequireAuth redirectTo="/login" requiredRole="professor">
-          <ProfessorDashboard />
-        </RequireAuth>
-      } />
-      <Route path="/student-profile" element={
-        <RequireAuth redirectTo="/login" requiredRole="student">
-          <StudentProfile />
-        </RequireAuth>
-      } />
-      <Route path="/professor-profile" element={
-        <RequireAuth redirectTo="/login" requiredRole="professor">
-          <ProfessorProfile />
-        </RequireAuth>
-      } />
-      <Route path="/create-position" element={
-        <RequireAuth redirectTo="/login" requiredRole="professor">
-          <CreatePosition />
-        </RequireAuth>
-      } />
-      <Route path="/edit-position/:positionId" element={
-        <RequireAuth redirectTo="/login" requiredRole="professor">
-          <EditPosition />
-        </RequireAuth>
-      } />
-      <Route path="/browse-positions" element={<BrowsePositions />} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
-  );
-};
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -123,9 +32,21 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <AppRoutes />
-            {/* Only show debugger when not in production */}
-            {import.meta.env.DEV && <SupabaseDebugger />}
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/student-profile-setup" element={<StudentProfileSetup />} />
+              <Route path="/professor-profile-setup" element={<ProfessorProfileSetup />} />
+              <Route path="/student-dashboard" element={<StudentDashboard />} />
+              <Route path="/professor-dashboard" element={<ProfessorDashboard />} />
+              <Route path="/student-profile" element={<StudentProfile />} />
+              <Route path="/professor-profile" element={<ProfessorProfile />} />
+              <Route path="/create-position" element={<CreatePosition />} />
+              <Route path="/edit-position/:positionId" element={<EditPosition />} />
+              <Route path="/browse-positions" element={<BrowsePositions />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
           </BrowserRouter>
         </PositionsProvider>
       </AuthProvider>

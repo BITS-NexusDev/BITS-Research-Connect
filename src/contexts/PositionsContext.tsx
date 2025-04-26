@@ -1,8 +1,8 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { ResearchPosition, Application, DbResearchPosition, DbApplication } from "@/lib/types";
+import { ResearchPosition, Application } from "@/lib/types";
 import { mockDataService } from "@/lib/mock-data";
 import { useAuth } from "./AuthContext";
-import { supabase, generateUUID } from "@/integrations/supabase/client";
 
 interface PositionsContextType {
   positions: ResearchPosition[];
@@ -14,7 +14,7 @@ interface PositionsContextType {
   deletePosition: (id: string) => Promise<void>;
   getApplicationsForPosition: (positionId: string) => Application[];
   hasApplied: (positionId: string) => boolean;
-  createApplication: (positionId: string, pitch: string, resumeLink: string) => Promise<void>;
+  createApplication: (positionId: string, pitch: string) => Promise<void>;
   updateApplicationStatus: (applicationId: string, status: "pending" | "shortlisted" | "rejected") => Promise<void>;
   myPositions: ResearchPosition[]; // For professors
   myApplications: Application[]; // For students
@@ -30,105 +30,16 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const mapDbPositionToAppPosition = (dbPosition: DbResearchPosition, professorName?: string): ResearchPosition => {
-    return {
-      id: dbPosition.id,
-      professorId: dbPosition.professor_id,
-      professorName: professorName || "Unknown Professor",
-      researchArea: dbPosition.title,
-      courseCode: dbPosition.description.split(' • ')[0] || dbPosition.description,
-      credits: dbPosition.duration_months || 3,
-      semester: "Current",
-      prerequisites: dbPosition.requirements || undefined,
-      minimumCGPA: parseFloat(dbPosition.requirements?.match(/CGPA: (\d+\.\d+)/)?.[1] || "7.5"),
-      summary: dbPosition.description,
-      specificRequirements: dbPosition.requirements,
-      createdAt: new Date(dbPosition.created_at),
-      status: dbPosition.status as "open" | "closed",
-      department: dbPosition.department || "General",
-      eligibleBranches: dbPosition.requirements?.split(',').map(s => s.trim()) || ["All Branches"],
-      numberOfOpenings: dbPosition.number_of_openings || 1,
-      lastDateToApply: new Date(dbPosition.deadline || Date.now() + 30 * 24 * 60 * 60 * 1000)
-    };
-  };
-
-  const mapDbApplicationToAppApplication = async (dbApp: DbApplication): Promise<Application> => {
-    const { data: studentData } = await supabase
-      .from('students')
-      .select('*')
-      .eq('id', dbApp.student_id)
-      .single();
-      
-    return {
-      id: dbApp.id,
-      positionId: dbApp.position_id,
-      studentId: dbApp.student_id,
-      fullName: studentData?.full_name || "Unknown Student",
-      idNumber: studentData?.id_number || "",
-      email: studentData?.email || "",
-      btechBranch: studentData?.btech_branch || undefined,
-      dualDegree: studentData?.dual_degree || undefined,
-      minorDegree: studentData?.minor_degree || undefined,
-      whatsappNumber: studentData?.whatsapp_number || "",
-      cgpa: studentData?.cgpa || 0,
-      pitch: dbApp.cover_letter || "",
-      status: dbApp.status as "pending" | "shortlisted" | "rejected",
-      createdAt: new Date(dbApp.created_at)
-    };
-  };
-
-  const refreshPositions = async () => {
+  const refreshPositions = () => {
     setLoading(true);
     try {
-      console.log("Refreshing positions and applications data...");
-      const { data: positionsData, error: positionsError } = await supabase
-        .from('research_positions')
-        .select('*');
-
-      if (positionsError) {
-        console.error("Error fetching positions:", positionsError);
-        throw positionsError;
-      }
-
-      console.log("Positions data received:", positionsData);
-
-      const { data: applicationsData, error: applicationsError } = await supabase
-        .from('applications')
-        .select('*');
-
-      if (applicationsError) {
-        console.error("Error fetching applications:", applicationsError);
-        throw applicationsError;
-      }
-
-      console.log("Applications data received:", applicationsData);
-
-      const professorIds = [...new Set(positionsData.map(p => p.professor_id))];
-      const professorNamesMap: Record<string, string> = {};
+      const allPositions = mockDataService.getPositions();
+      setPositions(allPositions);
       
-      for (const profId of professorIds) {
-        const { data: profData } = await supabase
-          .from('professors')
-          .select('full_name')
-          .eq('id', profId)
-          .single();
-          
-        if (profData) {
-          professorNamesMap[profId] = profData.full_name;
-        }
-      }
-
-      const mappedPositions: ResearchPosition[] = positionsData.map(p => 
-        mapDbPositionToAppPosition(p, professorNamesMap[p.professor_id]));
-
-      const mappedApplicationsPromises = applicationsData.map(mapDbApplicationToAppApplication);
-      const mappedApplications = await Promise.all(mappedApplicationsPromises);
-
-      setPositions(mappedPositions);
-      setApplications(mappedApplications);
-      console.log("Data refresh complete. Positions:", mappedPositions.length, "Applications:", mappedApplications.length);
+      const allApplications = mockDataService.getApplications();
+      setApplications(allApplications);
     } catch (err) {
-      console.error("Error in refreshPositions:", err);
+      console.error("Error fetching positions:", err);
       setError("Failed to fetch research positions");
     } finally {
       setLoading(false);
@@ -152,51 +63,23 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setError(null);
     
     try {
-      console.log("Creating position with data:", JSON.stringify(data, null, 2));
+      const result = mockDataService.createPosition({
+        ...data,
+        professorId: user.id,
+        professorName: user.fullName,
+        department: user.department,
+        status: "open"
+      });
       
-      const deadline = data.lastDateToApply instanceof Date 
-        ? data.lastDateToApply.toISOString().split('T')[0]
-        : data.lastDateToApply;
-
-      const professorId = generateUUID(user.id);
-      
-      const insertData = {
-        professor_id: professorId,
-        title: data.researchArea,
-        description: `${data.courseCode} • ${data.credits} credits • ${data.summary}`,
-        requirements: `Minimum CGPA: ${data.minimumCGPA}, ${data.prerequisites || ''} ${data.specificRequirements || ''}`,
-        status: 'open',
-        department: data.department,
-        number_of_openings: data.numberOfOpenings,
-        deadline: deadline,
-        duration_months: data.credits
-      };
-
-      console.log("Sending data to Supabase:", JSON.stringify(insertData, null, 2));
-
-      const { data: newPosition, error } = await supabase
-        .from('research_positions')
-        .insert(insertData)
-        .select()
-        .single();
-
-      if (error) {
-        console.error("Error creating position:", error);
-        throw error;
+      if (result.success) {
+        refreshPositions();
+        return result.position;
+      } else {
+        throw new Error("Failed to create position");
       }
-      
-      console.log("Position created successfully:", newPosition);
-      await refreshPositions();
-      
-      const createdPosition = positions.find(p => p.id === newPosition.id);
-      if (!createdPosition) {
-        throw new Error("Failed to retrieve created position");
-      }
-      
-      return createdPosition;
     } catch (err) {
       console.error("Create position failed:", err);
-      setError("Failed to create position");
+      setError(err instanceof Error ? err.message : "Failed to create position");
       throw err;
     } finally {
       setLoading(false);
@@ -217,49 +100,15 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setError(null);
     
     try {
-      console.log("Updating position:", id, "with data:", data);
-      
-      const updateData: any = {};
-      
-      if (data.researchArea !== undefined) updateData.title = data.researchArea;
-      if (data.summary !== undefined || data.courseCode !== undefined || data.credits !== undefined) {
-        const currentPosition = positions.find(p => p.id === id);
-        updateData.description = `${data.courseCode || currentPosition?.courseCode} • ${data.credits || currentPosition?.credits} credits • ${data.summary || currentPosition?.summary}`;
+      const result = mockDataService.updatePosition(id, data);
+      if (result.success) {
+        refreshPositions();
+        return result.position;
       }
-      if (data.prerequisites !== undefined || data.specificRequirements !== undefined || data.minimumCGPA !== undefined) {
-        const currentPosition = positions.find(p => p.id === id);
-        updateData.requirements = `Minimum CGPA: ${data.minimumCGPA || currentPosition?.minimumCGPA}, ${data.prerequisites || currentPosition?.prerequisites || ''} ${data.specificRequirements || currentPosition?.specificRequirements || ''}`;
-      }
-      if (data.status !== undefined) updateData.status = data.status;
-      if (data.numberOfOpenings !== undefined) updateData.number_of_openings = data.numberOfOpenings;
-      if (data.lastDateToApply !== undefined) {
-        updateData.deadline = data.lastDateToApply instanceof Date 
-          ? data.lastDateToApply.toISOString().split('T')[0] 
-          : data.lastDateToApply;
-      }
-      if (data.department !== undefined) updateData.department = data.department;
-      if (data.credits !== undefined) updateData.duration_months = data.credits;
-      
-      console.log("Sending update data to Supabase:", updateData);
-      
-      const { error } = await supabase
-        .from('research_positions')
-        .update(updateData)
-        .eq('id', id);
-        
-      if (error) {
-        console.error("Error updating position:", error);
-        throw error;
-      }
-      
-      console.log("Position updated successfully");
-      await refreshPositions();
-      
-      const updatedPosition = positions.find(p => p.id === id);
-      return updatedPosition;
+      return undefined;
     } catch (err) {
       console.error("Update position failed:", err);
-      setError("Failed to update position");
+      setError(err instanceof Error ? err.message : "Failed to update position");
       return undefined;
     } finally {
       setLoading(false);
@@ -271,26 +120,20 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       throw new Error("Only professors can delete positions");
     }
 
+    const position = positions.find(p => p.id === id);
+    if (!position || position.professorId !== user.id) {
+      throw new Error("You don't have permission to delete this position");
+    }
+
     setLoading(true);
     setError(null);
     
     try {
-      console.log("Deleting position:", id);
-      const { error } = await supabase
-        .from('research_positions')
-        .delete()
-        .eq('id', id);
-
-      if (error) {
-        console.error("Error deleting position:", error);
-        throw error;
-      }
-      
-      console.log("Position deleted successfully");
+      await mockDataService.deletePosition(id);
       refreshPositions();
     } catch (err) {
       console.error("Delete position failed:", err);
-      setError("Failed to delete position");
+      setError(err instanceof Error ? err.message : "Failed to delete position");
       throw err;
     } finally {
       setLoading(false);
@@ -318,7 +161,7 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return applications.some(a => a.positionId === positionId && a.studentId === user.id);
   };
 
-  const createApplication = async (positionId: string, pitch: string, resumeLink: string) => {
+  const createApplication = async (positionId: string, pitch: string) => {
     if (!user || user.role !== "student") {
       throw new Error("Only students can apply for positions");
     }
@@ -327,7 +170,6 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setError(null);
     
     try {
-      console.log("Creating application for position:", positionId);
       if (hasApplied(positionId)) {
         throw new Error("You have already applied for this position");
       }
@@ -342,25 +184,21 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
       
       const applicationData = {
-        position_id: positionId,
-        student_id: user.id,
-        cover_letter: pitch,
-        status: 'pending'
+        positionId,
+        studentId: user.id,
+        fullName: user.fullName,
+        idNumber: user.idNumber,
+        email: user.email,
+        whatsappNumber: user.whatsappNumber,
+        btechBranch: user.btechBranch,
+        dualDegree: user.dualDegree,
+        minorDegree: user.minorDegree,
+        cgpa: user.cgpa,
+        pitch
       };
       
-      console.log("Sending application data to Supabase:", applicationData);
-      
-      const { data, error } = await supabase
-        .from('applications')
-        .insert(applicationData);
-
-      if (error) {
-        console.error("Error creating application:", error);
-        throw error;
-      }
-      
-      console.log("Application created successfully");
-      await refreshPositions();
+      await mockDataService.createApplication(applicationData);
+      refreshPositions();
     } catch (err) {
       console.error("Application creation failed:", err);
       setError(err instanceof Error ? err.message : "Failed to submit application");
@@ -389,19 +227,8 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setError(null);
     
     try {
-      console.log("Updating application status:", applicationId, "to", status);
-      const { error } = await supabase
-        .from('applications')
-        .update({ status })
-        .eq('id', applicationId);
-
-      if (error) {
-        console.error("Error updating application status:", error);
-        throw error;
-      }
-      
-      console.log("Application status updated successfully");
-      await refreshPositions();
+      await mockDataService.updateApplication(applicationId, { status });
+      refreshPositions();
     } catch (err) {
       console.error("Update application status failed:", err);
       setError(err instanceof Error ? err.message : "Failed to update application status");
@@ -411,6 +238,7 @@ export const PositionsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
+  // Filtered data based on user role
   const myPositions = user?.role === "professor" 
     ? positions.filter(p => p.professorId === user.id)
     : [];

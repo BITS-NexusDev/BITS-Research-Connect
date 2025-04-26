@@ -1,14 +1,12 @@
 
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { primaryDisciplineList, secondaryDisciplineList, minorList } from "@/lib/constants";
 
 const StudentProfileSetup = () => {
   const { user, updateProfile } = useAuth();
@@ -25,14 +23,15 @@ const StudentProfileSetup = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   useEffect(() => {
+    // If not logged in or not a student, redirect to login
     if (!user) {
       navigate("/login");
     } else if (user.role !== "student") {
       navigate("/professor-profile-setup");
     }
     
+    // Pre-fill form if data exists
     if (user && user.role === "student") {
-      console.log("Pre-filling student form with data:", user);
       setFormData({
         btechBranch: user.btechBranch || "",
         dualDegree: user.dualDegree || "",
@@ -48,14 +47,10 @@ const StudentProfileSetup = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSelectChange = (name: string, value: string) => {
-    console.log(`Changing ${name} to ${value}`);
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validate WhatsApp number (10 digits)
     if (!/^\d{10}$/.test(formData.whatsappNumber)) {
       toast({
         title: "Invalid WhatsApp Number",
@@ -65,6 +60,7 @@ const StudentProfileSetup = () => {
       return;
     }
     
+    // Validate CGPA
     const cgpa = parseFloat(formData.cgpa);
     if (isNaN(cgpa) || cgpa < 0 || cgpa > 10) {
       toast({
@@ -78,11 +74,6 @@ const StudentProfileSetup = () => {
     try {
       setIsSubmitting(true);
       
-      console.log("Submitting student profile data:", {
-        ...formData,
-        cgpa
-      });
-      
       await updateProfile({
         ...formData,
         cgpa
@@ -93,9 +84,9 @@ const StudentProfileSetup = () => {
         description: "Your student profile has been successfully saved.",
       });
       
+      // Redirect to dashboard
       navigate("/student-dashboard");
     } catch (error) {
-      console.error("Profile update error:", error);
       toast({
         title: "Update Failed",
         description: "Failed to update profile. Please try again.",
@@ -118,54 +109,36 @@ const StudentProfileSetup = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="btechBranch">B.Tech Branch*</Label>
-              <Select 
-                value={formData.btechBranch} 
-                onValueChange={(value) => handleSelectChange("btechBranch", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select your B.Tech branch" />
-                </SelectTrigger>
-                <SelectContent>
-                  {primaryDisciplineList.map((branch) => (
-                    <SelectItem key={branch} value={branch}>{branch}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="btechBranch">B.Tech Branch (if any)</Label>
+              <Input
+                id="btechBranch"
+                name="btechBranch"
+                placeholder="e.g., Computer Science"
+                value={formData.btechBranch}
+                onChange={handleChange}
+              />
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="dualDegree">Dual Degree (if any)</Label>
-              <Select 
-                value={formData.dualDegree} 
-                onValueChange={(value) => handleSelectChange("dualDegree", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select your dual degree" />
-                </SelectTrigger>
-                <SelectContent>
-                  {secondaryDisciplineList.map((degree) => (
-                    <SelectItem key={degree} value={degree}>{degree}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                id="dualDegree"
+                name="dualDegree"
+                placeholder="e.g., MSc. Economics"
+                value={formData.dualDegree}
+                onChange={handleChange}
+              />
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="minorDegree">Minor Degree (if any)</Label>
-              <Select 
-                value={formData.minorDegree} 
-                onValueChange={(value) => handleSelectChange("minorDegree", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select your minor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {minorList.map((minor) => (
-                    <SelectItem key={minor} value={minor}>{minor}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                id="minorDegree"
+                name="minorDegree"
+                placeholder="e.g., Finance"
+                value={formData.minorDegree}
+                onChange={handleChange}
+              />
             </div>
             
             <div className="space-y-2">
@@ -185,10 +158,6 @@ const StudentProfileSetup = () => {
               <Input
                 id="cgpa"
                 name="cgpa"
-                type="number"
-                step="0.01"
-                min="0"
-                max="10"
                 placeholder="e.g., 8.5"
                 value={formData.cgpa}
                 onChange={handleChange}

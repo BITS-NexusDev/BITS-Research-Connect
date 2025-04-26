@@ -1,19 +1,23 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePositions } from "@/contexts/PositionsContext";
 import { ProfessorProfile } from "@/lib/types";
-import { courseCodeList, courseIDList, semesterList, primaryDisciplineList } from "@/lib/constants";
 
 const credits = [1, 2, 3, 4, 5, 6, 9];
+const semesters = [
+  "Academic Year 24-25 Semester-1",
+  "Academic Year 24-25 Semester-2",
+  "Academic Year 25-26 Semester-1",
+  "Academic Year 25-26 Semester-2"
+];
 
 const CreatePosition = () => {
   const { user } = useAuth();
@@ -23,17 +27,13 @@ const CreatePosition = () => {
   
   const [formData, setFormData] = useState({
     researchArea: "",
-    coursePrefix: "",
-    courseNumber: "",
+    courseCode: "",
     credits: "",
     semester: "",
     prerequisites: "",
     minimumCGPA: "",
     summary: "",
-    specificRequirements: "",
-    eligibleBranches: [] as string[],
-    numberOfOpenings: "1",
-    lastDateToApply: ""
+    specificRequirements: ""
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -57,9 +57,8 @@ const CreatePosition = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.researchArea || !formData.coursePrefix || !formData.courseNumber || !formData.credits || 
-        !formData.semester || !formData.minimumCGPA || !formData.summary ||
-        !formData.lastDateToApply || formData.eligibleBranches.length === 0) {
+    if (!formData.researchArea || !formData.courseCode || !formData.credits || 
+        !formData.semester || !formData.minimumCGPA || !formData.summary) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields.",
@@ -88,22 +87,15 @@ const CreatePosition = () => {
     }
 
     const professorUser = user as ProfessorProfile;
-    console.log("Professor user data:", professorUser);
     
     try {
       setIsSubmitting(true);
       
-      console.log("Form data before submission:", formData);
-      console.log("Creating position with department:", professorUser.department);
-      
       await createPosition({
         ...formData,
-        courseCode: `${formData.coursePrefix} ${formData.courseNumber}`,
         credits: parseInt(formData.credits),
-        minimumCGPA: parseFloat(formData.minimumCGPA),
-        numberOfOpenings: parseInt(formData.numberOfOpenings),
-        department: professorUser.department || "",
-        lastDateToApply: new Date(formData.lastDateToApply)
+        minimumCGPA: cgpa,
+        department: professorUser.department
       });
       
       toast({
@@ -113,10 +105,9 @@ const CreatePosition = () => {
       
       navigate("/professor-dashboard");
     } catch (error) {
-      console.error("Error creating position:", error);
       toast({
         title: "Creation Failed",
-        description: `Failed to create research position: ${error instanceof Error ? error.message : "Unknown error"}`,
+        description: "Failed to create research position. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -151,41 +142,17 @@ const CreatePosition = () => {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="coursePrefix">Course Code*</Label>
-                  <Select 
-                    value={formData.coursePrefix}
-                    onValueChange={(value) => handleSelectChange("coursePrefix", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select prefix" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {courseCodeList.map((code) => (
-                        <SelectItem key={code} value={code}>{code}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="courseCode">Course Code*</Label>
+                  <Input
+                    id="courseCode"
+                    name="courseCode"
+                    placeholder="e.g., CS F266"
+                    value={formData.courseCode}
+                    onChange={handleChange}
+                    required
+                  />
                 </div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="courseNumber">Course Number*</Label>
-                  <Select 
-                    value={formData.courseNumber}
-                    onValueChange={(value) => handleSelectChange("courseNumber", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select number" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {courseIDList.map((id) => (
-                        <SelectItem key={id} value={id}>{id}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="credits">Credits*</Label>
                   <Select 
@@ -202,23 +169,23 @@ const CreatePosition = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="semester">Semester*</Label>
-                  <Select 
-                    value={formData.semester} 
-                    onValueChange={(value) => handleSelectChange("semester", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select semester" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {semesterList.map((semester) => (
-                        <SelectItem key={semester} value={semester}>{semester}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="semester">Semester*</Label>
+                <Select 
+                  value={formData.semester} 
+                  onValueChange={(value) => handleSelectChange("semester", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select semester" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {semesters.map((semester) => (
+                      <SelectItem key={semester} value={semester}>{semester}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               
               <div className="space-y-2">
@@ -271,63 +238,6 @@ const CreatePosition = () => {
                   onChange={handleChange}
                   rows={3}
                 />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="eligibleBranches">Eligible Branches*</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  {primaryDisciplineList.map((branch) => (
-                    <div key={branch} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={branch}
-                        checked={formData.eligibleBranches.includes(branch)}
-                        onCheckedChange={(checked) => {
-                          setFormData(prev => ({
-                            ...prev,
-                            eligibleBranches: checked
-                              ? [...prev.eligibleBranches, branch]
-                              : prev.eligibleBranches.filter(b => b !== branch)
-                          }));
-                        }}
-                      />
-                      <label
-                        htmlFor={branch}
-                        className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        {branch}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="numberOfOpenings">Number of Openings*</Label>
-                  <Input
-                    id="numberOfOpenings"
-                    name="numberOfOpenings"
-                    type="number"
-                    min="1"
-                    max="15"
-                    value={formData.numberOfOpenings}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="lastDateToApply">Last Date to Apply*</Label>
-                  <Input
-                    id="lastDateToApply"
-                    name="lastDateToApply"
-                    type="date"
-                    value={formData.lastDateToApply}
-                    onChange={handleChange}
-                    min={new Date().toISOString().split('T')[0]}
-                    required
-                  />
-                </div>
               </div>
               
               <div className="pt-4 flex justify-end space-x-4">

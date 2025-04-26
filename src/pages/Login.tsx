@@ -7,13 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [debug, setDebug] = useState<string | null>(null);
   const { toast } = useToast();
   const { login, error } = useAuth();
   const navigate = useNavigate();
@@ -32,86 +30,26 @@ const Login = () => {
     
     try {
       setIsSubmitting(true);
-      setDebug(null);
+      await login(email, password);
       
-      // Try to log in with Supabase directly
-      const { data, error: supabaseError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      
-      if (supabaseError) {
-        throw new Error(supabaseError.message);
-      }
-
-      if (data.user) {
-        // Show debug information in development
-        setDebug(`Authenticated with ID: ${data.user.id}`);
-        console.log("Auth data:", data);
-        
+      // The authContext will update the user state if login is successful
+      // We can check if there was an error
+      if (!error) {
         toast({
           title: "Login Successful",
           description: "Welcome back to BITS Research Connect!",
         });
         
-        // Redirect based on user role in the session
-        const { data: userRoleData, error: roleError } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('id', data.user.id)
-          .single();
-          
-        if (roleError) {
-          console.error("Error fetching user role:", roleError);
-          setDebug(prev => `${prev}\nRole error: ${roleError.message}`);
-        }
-          
-        if (userRoleData && userRoleData.role) {
-          setDebug(prev => `${prev}\nRole: ${userRoleData.role}`);
-          
-          if (userRoleData.role === "student") {
-            navigate("/student-dashboard");
-          } else {
-            navigate("/professor-dashboard");
-          }
-        } else {
-          setDebug(prev => `${prev}\nNo role data found, checking tables directly`);
-          
-          // Check if user exists in students or professors table
-          const { data: studentData } = await supabase
-            .from('students')
-            .select('id')
-            .eq('id', data.user.id)
-            .maybeSingle();
-            
-          const { data: professorData } = await supabase
-            .from('professors')
-            .select('id')
-            .eq('id', data.user.id)
-            .maybeSingle();
-            
-          if (studentData) {
-            setDebug(prev => `${prev}\nFound in students table`);
-            navigate("/student-dashboard");
-          } else if (professorData) {
-            setDebug(prev => `${prev}\nFound in professors table`);
-            navigate("/professor-dashboard");
-          } else {
-            // Fallback if we can't determine role
-            setDebug(prev => `${prev}\nNot found in any table, redirecting to home`);
-            navigate("/");
-          }
-        }
+        // Redirect to the appropriate dashboard based on role
+        // This will be handled in useEffect in App.tsx
+        navigate("/");
       }
     } catch (err) {
-      console.error("Login failed:", err);
       toast({
         title: "Login Failed",
-        description: err instanceof Error ? err.message : "Invalid credentials. Please try again.",
+        description: error || "Something went wrong. Please try again.",
         variant: "destructive",
       });
-      
-      setDebug(`Login error: ${err instanceof Error ? err.message : "Unknown error"}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -162,15 +100,6 @@ const Login = () => {
             >
               {isSubmitting ? "Signing in..." : "Sign In"}
             </Button>
-            
-            {debug && (
-              <div className="mt-4 p-3 bg-gray-100 rounded text-xs font-mono overflow-auto max-h-40">
-                <p className="font-bold mb-1">Debug Info:</p>
-                {debug.split('\n').map((line, i) => (
-                  <p key={i}>{line}</p>
-                ))}
-              </div>
-            )}
           </form>
         </CardContent>
         <CardFooter>

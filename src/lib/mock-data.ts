@@ -51,7 +51,7 @@ export const mockProfessors: ProfessorProfile[] = [
     designation: "Professor",
     department: "Computer Science",
     chamberNumber: "A-212",
-    researchInterests: ["Machine Learning", "Computer Vision", "Natural Language Processing"],
+    researchInterests: "Machine Learning, Computer Vision, Natural Language Processing",
     createdAt: new Date("2023-01-01")
   },
   {
@@ -64,7 +64,7 @@ export const mockProfessors: ProfessorProfile[] = [
     designation: "Associate Professor",
     department: "Mechanical Engineering",
     chamberNumber: "B-113",
-    researchInterests: ["Fluid Dynamics", "Thermal Engineering"],
+    researchInterests: "Fluid Dynamics, Thermal Engineering",
     createdAt: new Date("2023-01-02")
   },
   {
@@ -77,7 +77,7 @@ export const mockProfessors: ProfessorProfile[] = [
     designation: "Assistant Professor",
     department: "Economics",
     chamberNumber: "C-302",
-    researchInterests: ["Macroeconomics", "Development Economics"],
+    researchInterests: "Macroeconomics, Development Economics",
     createdAt: new Date("2023-01-03")
   }
 ];
@@ -98,10 +98,7 @@ export const mockPositions: ResearchPosition[] = [
     specificRequirements: "Proficiency in Python and PyTorch/TensorFlow is required.",
     createdAt: new Date("2024-04-01"),
     status: "open",
-    department: "Computer Science",
-    eligibleBranches: ["A5 - Computer Science", "A7 - Electronics & Communication"],
-    numberOfOpenings: 2,
-    lastDateToApply: new Date("2024-06-30")
+    department: "Computer Science"
   },
   {
     id: "pos2",
@@ -116,10 +113,7 @@ export const mockPositions: ResearchPosition[] = [
     summary: "Simulation of fluid flow and heat transfer in microchannels.",
     createdAt: new Date("2024-04-02"),
     status: "open",
-    department: "Mechanical Engineering",
-    eligibleBranches: ["A2 - Civil", "A4 - Mechanical"],
-    numberOfOpenings: 3,
-    lastDateToApply: new Date("2024-07-15")
+    department: "Mechanical Engineering"
   },
   {
     id: "pos3",
@@ -135,47 +129,7 @@ export const mockPositions: ResearchPosition[] = [
     specificRequirements: "Familiarity with statistical software (R/STATA) is preferred.",
     createdAt: new Date("2024-04-03"),
     status: "open",
-    department: "Economics",
-    eligibleBranches: ["A1 - Chemical", "A5 - Computer Science"],
-    numberOfOpenings: 1,
-    lastDateToApply: new Date("2024-08-01")
-  },
-  {
-    id: "pos4",
-    professorId: "p1",
-    professorName: "Dr. Anand Mishra",
-    researchArea: "Natural Language Processing",
-    courseCode: "CS F367",
-    credits: 3,
-    semester: "Academic Year 24-25 Semester-2",
-    prerequisites: "CS F266 with Grade: B or above",
-    minimumCGPA: 7.5,
-    summary: "Research on transformer models for Indian languages.",
-    specificRequirements: "Experience with PyTorch and transformers library preferred.",
-    createdAt: new Date("2024-04-04"),
-    status: "open",
-    department: "Computer Science",
-    eligibleBranches: ["A5 - Computer Science", "A7 - Electronics & Communication"],
-    numberOfOpenings: 2,
-    lastDateToApply: new Date("2024-08-15")
-  },
-  {
-    id: "pos5",
-    professorId: "p2",
-    professorName: "Dr. Sunita Verma",
-    researchArea: "Renewable Energy Systems",
-    courseCode: "ME F366",
-    credits: 4,
-    semester: "Academic Year 24-25 Semester-2",
-    prerequisites: "ME F266 with Grade: B or above",
-    minimumCGPA: 7.0,
-    summary: "Design and optimization of solar thermal systems.",
-    createdAt: new Date("2024-04-05"),
-    status: "open",
-    department: "Mechanical Engineering",
-    eligibleBranches: ["A4 - Mechanical", "A3 - Chemical"],
-    numberOfOpenings: 1,
-    lastDateToApply: new Date("2024-08-30")
+    department: "Economics"
   }
 ];
 
@@ -209,35 +163,6 @@ export const mockApplications: Application[] = [
     pitch: "I have a strong interest in fluid dynamics and have completed relevant coursework. I am eager to apply my knowledge to computational simulations.",
     status: "shortlisted",
     createdAt: new Date("2024-04-11")
-  },
-  {
-    id: "app3",
-    positionId: "pos1",
-    studentId: "s2",
-    fullName: "Priya Patel",
-    idNumber: "2021A3PS0042G",
-    email: "f20210042@goa.bits-pilani.ac.in",
-    btechBranch: "Mechanical Engineering",
-    minorDegree: "Finance",
-    whatsappNumber: "9876543211",
-    cgpa: 8.7,
-    pitch: "I have experience in deep learning and computer vision projects. I would love to contribute to this research.",
-    status: "shortlisted",
-    createdAt: new Date("2024-04-12")
-  },
-  {
-    id: "app4",
-    positionId: "pos1",
-    studentId: "s3",
-    fullName: "Rahul Gupta",
-    idNumber: "2022A8PS0103G",
-    email: "f20220103@goa.bits-pilani.ac.in",
-    btechBranch: "Electronics and Communication",
-    whatsappNumber: "9876543212",
-    cgpa: 8.1,
-    pitch: "I am particularly interested in the intersection of ML and computer vision.",
-    status: "rejected",
-    createdAt: new Date("2024-04-13")
   }
 ];
 
@@ -366,16 +291,7 @@ export const mockDataService = {
   
   // Position management
   getPositions: () => {
-    // If there's a logged in user, check their role
-    const currentUser = mockDataService.getCurrentUser();
-    
-    if (currentUser?.role === 'professor') {
-      // For professors, only return their positions
-      return positions.filter(p => p.professorId === currentUser.id);
-    }
-    
-    // For students or non-logged in users, return all open positions
-    return positions.filter(p => p.status === 'open');
+    return positions;
   },
   
   getPosition: (id: string) => {
